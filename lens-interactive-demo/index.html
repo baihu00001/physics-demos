@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>糖糖和糖豆｜透镜虚拟实验室</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d7dce5;
+      --panel: #eefaff;
+      --blue: #258fca;
+      --blue-dark: #126a9a;
+      --lens: #7676df;
+      --object: #ffb000;
+      --image: #17a66a;
+      --focus: #ffdf00;
+      --ray: #191919;
+      --orange: #ff7a1a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #f7f7f8;
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto minmax(560px, 1fr) auto;
+      transition: margin-right .25s ease;
+    }
+    body.learn-open .app { margin-right: min(520px, 42vw); }
+    body.learn-open .topbar { grid-template-columns: 1fr; }
+    body.learn-open .tool-group,
+    body.learn-open .top-actions { justify-content: center; }
+    body.learn-open .brand { text-align: center; }
+    body.learn-open .brand-lockup { justify-content: center; }
+    body.learn-open .control-dock {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      width: calc(100% - 16px);
+      border-radius: 12px;
+    }
+    body.learn-open .control-section {
+      min-width: 0;
+      padding: 9px 8px;
+      border-bottom: 1px solid #9ba8b1;
+    }
+    body.learn-open .control-section h2 {
+      margin-bottom: 6px;
+      overflow: hidden;
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    body.learn-open .stepper {
+      grid-template-columns: 25px minmax(0, 1fr) 25px;
+      gap: 3px;
+    }
+    body.learn-open .stepper button {
+      height: 27px;
+      padding: 0;
+      font-size: 12px;
+    }
+    body.learn-open .value-box { min-height: 27px; font-size: 12px; }
+    body.learn-open input[type="range"] { height: 15px; margin-top: 5px; }
+    body.learn-open .radio,
+    body.learn-open .check { gap: 4px; margin: 3px 0; font-size: 11px; }
+    body.learn-open .radio input,
+    body.learn-open .check input { width: 13px; height: 13px; }
+    body.learn-open .focus-button { margin-top: 5px; padding: 5px 3px; font-size: 11px; }
+    body.learn-open .result-list {
+      gap: 2px 5px;
+      margin-top: 4px;
+      font-size: 10px;
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 18px;
+      min-height: 82px;
+      padding: 12px clamp(18px, 4vw, 70px);
+      border-bottom: 1px solid #d9d9dc;
+      background: #fff;
+    }
+    .brand-lockup { display: flex; align-items: center; gap: 11px; }
+    .brand-logo {
+      width: 62px;
+      height: 62px;
+      flex: 0 0 auto;
+      object-fit: cover;
+      border: 2px solid #ff8a45;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 3px 10px #ff7a1a24;
+    }
+    .brand-name {
+      margin-bottom: 1px;
+      color: #e85f20;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+    .brand h1 { margin: 0; font-size: 18px; }
+    .brand p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .tool-group { display: flex; align-items: center; gap: 10px; }
+    .tool-button {
+      min-width: 74px;
+      min-height: 50px;
+      padding: 7px 12px;
+      border: 2px solid #b9bcc3;
+      border-radius: 9px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .tool-button.active { border-color: #2e9ed1; box-shadow: inset 0 0 0 1px #2e9ed1; background: #f1fbff; }
+    .lens-icon { display: block; width: 24px; height: 38px; margin: 0 auto 2px; }
+    .top-actions { justify-content: flex-end; }
+    .action {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid #aeb4be;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .action.primary { border-color: var(--blue); color: #fff; background: var(--blue); }
+
+    .workspace { position: relative; min-height: 560px; background: #fff; }
+    #stage { display: block; width: 100%; height: 100%; min-height: 560px; touch-action: none; user-select: none; }
+    .drag-hint {
+      position: absolute;
+      left: 18px;
+      top: 14px;
+      padding: 7px 11px;
+      border: 1px solid #d5d9e0;
+      border-radius: 8px;
+      color: var(--muted);
+      background: #ffffffdd;
+      font-size: 13px;
+      pointer-events: none;
+    }
+    .stage-readout {
+      position: absolute;
+      right: 18px;
+      top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: 55vw;
+      pointer-events: none;
+    }
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #d5d9e0;
+      font-size: 13px;
+    }
+    .chip.good { color: #087b4c; border-color: #9bd9bd; background: #effbf5; }
+    .chip.warn { color: #a45b00; border-color: #f0c985; background: #fff9ed; }
+
+    .control-dock {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(210px, 1fr));
+      gap: 0;
+      width: min(1280px, calc(100% - 28px));
+      margin: -7px auto 16px;
+      border: 2px solid #323a45;
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: 0 8px 25px #0002;
+    }
+    .control-section { padding: 16px 18px; border-right: 1px solid #9ba8b1; }
+    .control-section:last-child { border-right: 0; }
+    .control-section h2 { margin: 0 0 10px; font-size: 17px; }
+    .radio, .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; cursor: pointer; }
+    .radio input, .check input { width: 18px; height: 18px; accent-color: var(--blue); }
+    .stepper { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: 7px; }
+    .stepper button {
+      height: 34px;
+      border: 1px solid #6b727c;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 900;
+    }
+    .value-box {
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #c8ced7;
+      border-radius: 5px;
+      background: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+    input[type="range"] { width: 100%; margin-top: 13px; accent-color: var(--blue); }
+    .result-list { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; margin-top: 10px; font-size: 14px; }
+    .result-list dt { color: var(--muted); }
+    .result-list dd { margin: 0; text-align: right; font-weight: 700; }
+    .focus-button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 9px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--orange);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .bottom-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      min-height: 60px;
+      padding: 8px clamp(18px, 4vw, 70px);
+      color: #fff;
+      background: #111;
+    }
+    .bottom-nav strong { margin-right: auto; font-size: 21px; }
+    .nav-button { border: 0; background: transparent; color: #fff; cursor: pointer; font-weight: 700; }
+
+    .learn-panel {
+      position: fixed;
+      z-index: 10;
+      top: 0;
+      right: 0;
+      width: min(520px, 42vw);
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      background: #fff;
+      border-left: 1px solid #cfd6df;
+      box-shadow: -8px 0 24px #0002;
+      transform: translateX(105%);
+      transition: transform .25s ease;
+    }
+    .learn-panel.open { transform: translateX(0); }
+    .learn-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .learn-head h2 { margin: 0; font-size: 22px; }
+    .learn-head button { margin-left: auto; border: 0; background: transparent; font-size: 25px; cursor: pointer; }
+    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
+    .tab {
+      padding: 12px 6px;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .tab.active { color: var(--blue-dark); border-bottom-color: var(--blue); background: #f4fbff; }
+    .learn-content { overflow: auto; padding: 20px; line-height: 1.75; }
+    .learn-content h3 { margin: 0 0 10px; }
+    .learn-content h4 { margin: 22px 0 8px; }
+    .learn-content p { margin: 8px 0; }
+    .formula-card, .explain-card, .quiz-card {
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid #cfe1eb;
+      border-radius: 11px;
+      background: #f5fbff;
+    }
+    .formula-card { text-align: center; font-family: "Times New Roman", serif; font-size: 20px; }
+    .steps { margin: 10px 0; padding-left: 24px; }
+    .steps li { margin: 8px 0; }
+    .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .case {
+      padding: 10px;
+      border: 1px solid #d9dee6;
+      border-radius: 9px;
+      background: #fff;
+      font-size: 13px;
+    }
+    .case.current { border-color: var(--blue); background: #eefaff; box-shadow: inset 0 0 0 1px var(--blue); }
+    .quiz-option {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px 12px;
+      border: 1px solid #c8ced7;
+      border-radius: 8px;
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+    }
+    .quiz-option.correct { border-color: #1d9b63; background: #edfbf4; }
+    .quiz-option.wrong { border-color: #db4d4d; background: #fff0f0; }
+    @media (max-width: 1100px) {
+      .control-dock { grid-template-columns: repeat(2, 1fr); }
+      .control-section { border-bottom: 1px solid #9ba8b1; }
+    }
+    @media (max-width: 900px) {
+      body.learn-open .app { margin-right: 46vw; }
+      .learn-panel { width: 46vw; }
+      body.learn-open .control-dock { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .topbar { grid-template-columns: 1fr; }
+      .tool-group, .top-actions { justify-content: center; }
+      .brand { text-align: center; }
+      .brand-lockup { justify-content: center; }
+    }
+    @media (max-width: 760px) {
+      body.learn-open .app { margin-right: 48vw; }
+      .learn-panel { width: 48vw; }
+      .workspace, #stage { min-height: 470px; }
+      .control-dock { grid-template-columns: 1fr; }
+      body.learn-open .control-dock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .control-section { border-right: 0; }
+      .stage-readout { top: 52px; max-width: calc(100vw - 36px); }
+      .tabs { grid-template-columns: 1fr 1fr; }
+      .learn-content { padding: 14px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-lockup">
+          <img class="brand-logo" src="assets/tangtang-tangdou-logo-clean.png" alt="糖糖和糖豆：背书包举手的学生和一只猫">
+          <div>
+            <div class="brand-name">糖糖和糖豆</div>
+            <h1>透镜虚拟实验室</h1>
+            <p>拖动器材，像做真实实验一样探索成像规律</p>
+          </div>
+        </div>
+      </div>
+      <div class="tool-group" aria-label="透镜选择">
+        <button id="convexTool" class="tool-button active" type="button" aria-pressed="true">
+          <svg class="lens-icon" viewBox="0 0 24 38" aria-hidden="true"><path d="M12 1 C1 11 1 27 12 37 C23 27 23 11 12 1Z" fill="#7676df" stroke="#222"/></svg>
+          凸透镜
+        </button>
+        <button id="concaveTool" class="tool-button" type="button" aria-pressed="false">
+          <svg class="lens-icon" viewBox="0 0 24 38" aria-hidden="true"><path d="M2 1 C10 10 10 28 2 37 H22 C14 28 14 10 22 1Z" fill="#c5c5dd" stroke="#555"/></svg>
+          凹透镜
+        </button>
+      </div>
+      <div class="tool-group top-actions">
+        <button id="reset" class="action" type="button">↻ 重置实验</button>
+        <button id="openLearn" class="action primary" type="button">📖 知识讲解</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <svg id="stage" viewBox="0 0 1400 620" role="img" aria-label="可拖动物体、透镜和光屏的几何光学实验">
+        <defs>
+          <linearGradient id="glass" x1="0" x2="1">
+            <stop offset="0" stop-color="#a7cfff" stop-opacity=".55"/>
+            <stop offset=".5" stop-color="#676bd2" stop-opacity=".92"/>
+            <stop offset="1" stop-color="#d3ebff" stop-opacity=".55"/>
+          </linearGradient>
+          <filter id="softBlur"><feGaussianBlur stdDeviation="4"/></filter>
+        </defs>
+        <line x1="0" y1="340" x2="1400" y2="340" stroke="#7d7db9" stroke-width="2.5" stroke-dasharray="10 8"/>
+        <g id="focusLayer"></g>
+        <g id="rayLayer"></g>
+        <g id="extensionLayer"></g>
+        <g id="screenLayer" class="draggable" data-drag="screen"></g>
+        <g id="imageLayer"></g>
+        <g id="lensLayer" class="draggable" data-drag="lens"></g>
+        <g id="objectLayer" class="draggable" data-drag="object"></g>
+        <g id="labelLayer"></g>
+      </svg>
+      <div class="drag-hint">↔ 拖动物体、透镜或光屏；双击光屏可自动对焦</div>
+      <div class="stage-readout">
+        <span id="imageChip" class="chip good">实像、倒立、缩小</span>
+        <span id="screenChip" class="chip warn">光屏未对焦</span>
+      </div>
+    </main>
+
+    <section class="control-dock" aria-label="实验控制面板">
+      <div class="control-section">
+        <h2>光线</h2>
+        <label class="radio"><input type="radio" name="rayMode" value="edge">边缘光线</label>
+        <label class="radio"><input type="radio" name="rayMode" value="principal" checked>主要光线</label>
+        <label class="radio"><input type="radio" name="rayMode" value="many">多光线</label>
+        <label class="radio"><input type="radio" name="rayMode" value="none">无光线</label>
+      </div>
+      <div class="control-section">
+        <h2>曲率半径 R</h2>
+        <div class="stepper">
+          <button type="button" data-step="radius" data-delta="-1" aria-label="减小曲率半径">◀</button>
+          <output id="radiusOut" class="value-box">20 cm</output>
+          <button type="button" data-step="radius" data-delta="1" aria-label="增大曲率半径">▶</button>
+        </div>
+        <input id="radius" type="range" min="12" max="40" step="1" value="20">
+      </div>
+      <div class="control-section">
+        <h2>折射率 n</h2>
+        <div class="stepper">
+          <button type="button" data-step="index" data-delta="-0.01" aria-label="减小折射率">◀</button>
+          <output id="indexOut" class="value-box">1.50</output>
+          <button type="button" data-step="index" data-delta="0.01" aria-label="增大折射率">▶</button>
+        </div>
+        <input id="refractiveIndex" type="range" min="1.30" max="1.80" step="0.01" value="1.50">
+      </div>
+      <div class="control-section">
+        <h2>中心厚度 d</h2>
+        <div class="stepper">
+          <button type="button" data-step="thickness" data-delta="-0.5" aria-label="减小透镜厚度">◀</button>
+          <output id="thicknessOut" class="value-box">4.0 cm</output>
+          <button type="button" data-step="thickness" data-delta="0.5" aria-label="增大透镜厚度">▶</button>
+        </div>
+        <input id="thickness" type="range" min="1" max="10" step="0.5" value="4">
+      </div>
+      <div class="control-section">
+        <h2>透镜口径 D</h2>
+        <div class="stepper">
+          <button type="button" data-step="aperture" data-delta="-1" aria-label="减小透镜口径">◀</button>
+          <output id="apertureOut" class="value-box">58 cm</output>
+          <button type="button" data-step="aperture" data-delta="1" aria-label="增大透镜口径">▶</button>
+        </div>
+        <input id="aperture" type="range" min="35" max="70" step="1" value="58">
+      </div>
+      <div class="control-section">
+        <h2>物体高度 h</h2>
+        <div class="stepper">
+          <button type="button" data-step="height" data-delta="-1" aria-label="减小物体高度">◀</button>
+          <output id="heightOut" class="value-box">18 cm</output>
+          <button type="button" data-step="height" data-delta="1" aria-label="增大物体高度">▶</button>
+        </div>
+        <input id="objectHeight" type="range" min="8" max="26" step="1" value="18">
+      </div>
+      <div class="control-section">
+        <h2>物距 u</h2>
+        <div class="stepper">
+          <button type="button" data-step="distance" data-delta="-1" aria-label="减小物距">◀</button>
+          <output id="distanceOut" class="value-box">45 cm</output>
+          <button type="button" data-step="distance" data-delta="1" aria-label="增大物距">▶</button>
+        </div>
+        <input id="distance" type="range" min="12" max="90" step="1" value="45">
+      </div>
+      <div class="control-section">
+        <h2>光屏位置 s</h2>
+        <div class="stepper">
+          <button type="button" data-step="screen" data-delta="-1" aria-label="光屏向左">◀</button>
+          <output id="screenOut" class="value-box">36 cm</output>
+          <button type="button" data-step="screen" data-delta="1" aria-label="光屏向右">▶</button>
+        </div>
+        <input id="screenDistance" type="range" min="8" max="90" step="1" value="36">
+        <button id="autoFocus" class="focus-button" type="button">将光屏移到清晰像处</button>
+      </div>
+      <div class="control-section">
+        <h2>显示与结果</h2>
+        <label class="check"><input id="showFocus" type="checkbox" checked>焦点 F 与 2F</label>
+        <label class="check"><input id="showVirtual" type="checkbox" checked>虚光线延长线</label>
+        <label class="check"><input id="showLabels" type="checkbox">标注距离</label>
+        <dl class="result-list">
+          <dt>等效焦距 f</dt><dd id="focalOut">+20.7 cm</dd>
+          <dt>像距 v</dt><dd id="vOut">36.0 cm</dd>
+          <dt>放大率 m</dt><dd id="mOut">−0.80</dd>
+          <dt>光屏</dt><dd id="screenOutText">未对焦</dd>
+        </dl>
+      </div>
+    </section>
+
+    <footer class="bottom-nav">
+      <strong>几何光学 · 透镜</strong>
+      <button id="bottomLearn" class="nav-button" type="button">知识点</button>
+      <button id="bottomDerive" class="nav-button" type="button">公式推演</button>
+      <button id="bottomQuiz" class="nav-button" type="button">自测练习</button>
+    </footer>
+  </div>
+
+  <aside id="learnPanel" class="learn-panel" aria-hidden="true">
+    <div class="learn-head">
+      <span aria-hidden="true">📘</span>
+      <h2>学习助手</h2>
+      <button id="closeLearn" type="button" aria-label="关闭知识讲解">×</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" type="button" data-tab="explain">知识点</button>
+      <button class="tab" type="button" data-tab="derive">公式推演</button>
+      <button class="tab" type="button" data-tab="cases">规律总结</button>
+      <button class="tab" type="button" data-tab="quiz">自测</button>
+    </div>
+    <div id="learnContent" class="learn-content"></div>
+  </aside>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const $ = selector => document.querySelector(selector);
+      const $$ = selector => [...document.querySelectorAll(selector)];
+      const stage = $("#stage");
+      const axisY = 340;
+      const scale = 6.6;
+      const bounds = { left: 70, right: 1330, top: 105, bottom: 555 };
+      const defaults = {
+        type: "convex",
+        lensX: 0,
+        objectX: -45,
+        screenX: 38,
+        radius: 20,
+        refractiveIndex: 1.50,
+        thickness: 4,
+        aperture: 58,
+        objectHeight: 18
+      };
+      const state = { ...defaults, rayMode: "principal", showFocus: true, showVirtual: true, showLabels: false };
+      let activeTab = "explain";
+      let dragTarget = null;
+
+      const sx = worldX => 700 + worldX * scale;
+      const sy = worldY => axisY - worldY * scale;
+      const wx = screenX => (screenX - 700) / scale;
+
+      function physics() {
+        const R1 = state.type === "convex" ? state.radius : -state.radius;
+        const R2 = -R1;
+        const n = state.refractiveIndex;
+        const d = state.thickness;
+        const power = (n - 1) * (
+          1 / R1 - 1 / R2 + ((n - 1) * d) / (n * R1 * R2)
+        );
+        const f = 1 / power;
+        const fMag = Math.abs(f);
+        const u = state.lensX - state.objectX;
+        const denominator = u - f;
+        const atFocus = state.type === "convex" && Math.abs(denominator) < 0.15;
+        const v = atFocus ? Infinity : f * u / denominator;
+        const m = atFocus ? -Infinity : -v / u;
+        const imageX = state.lensX + v;
+        const imageHeight = m * state.objectHeight;
+        const screenDistance = state.screenX - state.lensX;
+        const focused = v > 0 && Math.abs(screenDistance - v) <= 1.1;
+        return { f, fMag, R1, R2, n, d, u, v, m, imageX, imageHeight, screenDistance, focused, atFocus };
+      }
+
+      function classify(p) {
+        if (p.atFocus) return { text: "不成有限像，出射光平行", key: "focus" };
+        const reality = p.v > 0 ? "实像" : "虚像";
+        const orientation = p.m < 0 ? "倒立" : "正立";
+        const ratio = Math.abs(p.m);
+        const size = Math.abs(ratio - 1) < .04 ? "等大" : ratio > 1 ? "放大" : "缩小";
+        return { text: `${reality}、${orientation}、${size}`, key: `${reality}-${orientation}-${size}` };
+      }
+
+      function caseKey(p) {
+        if (state.type === "concave") return "concave";
+        if (Math.abs(p.u - p.fMag) < .5) return "atF";
+        if (p.u > 2 * p.fMag) return "beyond2F";
+        if (Math.abs(p.u - 2 * p.fMag) < .5) return "at2F";
+        if (p.u > p.fMag) return "betweenF2F";
+        return "insideF";
+      }
+
+      function line(a, b, dashed = false, opacity = 1) {
+        return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"
+          stroke="#171717" stroke-width="2.3" opacity="${opacity}" ${dashed ? 'stroke-dasharray="7 6"' : ""}/>`;
+      }
+
+      function boundaryEnd(start, through) {
+        const d = { x: through.x - start.x, y: through.y - start.y };
+        const ts = [];
+        if (d.x > 0) ts.push((bounds.right - start.x) / d.x);
+        if (d.x < 0) ts.push((bounds.left - start.x) / d.x);
+        if (d.y > 0) ts.push((bounds.bottom - start.y) / d.y);
+        if (d.y < 0) ts.push((bounds.top - start.y) / d.y);
+        const t = Math.min(...ts.filter(value => value > 0));
+        return { x: start.x + d.x * t, y: start.y + d.y * t };
+      }
+
+      function drawObject() {
+        const x = sx(state.objectX);
+        const top = sy(state.objectHeight);
+        $("#objectLayer").innerHTML = `
+          <rect x="${x - 21}" y="${top - 24}" width="42" height="${axisY - top + 28}" rx="7" fill="#b9e4f8" stroke="#8b8f96" stroke-width="4"/>
+          <rect x="${x - 15}" y="${top - 18}" width="30" height="${axisY - top + 16}" fill="#e7f7ff" stroke="#8b8f96"/>
+          <g>
+            <rect x="${x - 5}" y="${top + 12}" width="10" height="${axisY - top - 31}" fill="#ffc13b" stroke="#333"/>
+            <polygon points="${x - 7},${top + 13} ${x + 7},${top + 13} ${x},${top - 4}" fill="#d6b17b" stroke="#333"/>
+            <polygon points="${x - 2},${top + 1} ${x + 2},${top + 1} ${x},${top - 4}" fill="#333"/>
+            <path d="M${x - 5} ${axisY - 19} Q${x} ${axisY - 7} ${x + 5} ${axisY - 19}" fill="#f1879f" stroke="#333"/>
+          </g>
+          <text x="${x}" y="${top - 34}" text-anchor="middle" fill="#a56a00" font-size="17" font-weight="700">物体</text>
+          <rect x="${x - 28}" y="${top - 42}" width="56" height="${axisY - top + 76}" fill="transparent" class="hit-area"/>
+        `;
+      }
+
+      function lensPath(x) {
+        const halfThickness = 8 + state.thickness * 2.1;
+        const curvature = Math.max(8, Math.min(34, 520 / state.radius));
+        const halfAperture = state.aperture * scale / 2;
+        const top = axisY - halfAperture;
+        const bottom = axisY + halfAperture;
+        const upperControl = top + halfAperture * .42;
+        const lowerControl = bottom - halfAperture * .42;
+        if (state.type === "convex") {
+          return `<path d="M${x - halfThickness} ${top} C${x - halfThickness - curvature} ${upperControl} ${x - halfThickness - curvature} ${lowerControl} ${x - halfThickness} ${bottom}
+            L${x + halfThickness} ${bottom} C${x + halfThickness + curvature} ${lowerControl} ${x + halfThickness + curvature} ${upperControl} ${x + halfThickness} ${top}Z"
+            fill="url(#glass)" stroke="#17172f" stroke-width="3"/>`;
+        }
+        return `<path d="M${x - halfThickness} ${top} C${x - halfThickness + curvature} ${upperControl} ${x - halfThickness + curvature} ${lowerControl} ${x - halfThickness} ${bottom}
+          L${x + halfThickness} ${bottom} C${x + halfThickness - curvature} ${lowerControl} ${x + halfThickness - curvature} ${upperControl} ${x + halfThickness} ${top}Z"
+          fill="url(#glass)" stroke="#17172f" stroke-width="3"/>`;
+      }
+
+      function drawLens() {
+        const x = sx(state.lensX);
+        const halfAperture = state.aperture * scale / 2;
+        const top = axisY - halfAperture;
+        $("#lensLayer").innerHTML = `${lensPath(x)}
+          <text x="${x}" y="${top - 18}" text-anchor="middle" fill="#383870" font-size="17" font-weight="700">${state.type === "convex" ? "凸透镜" : "凹透镜"}</text>
+          <rect x="${x - 46}" y="${top - 28}" width="92" height="${halfAperture * 2 + 56}" fill="transparent" class="hit-area"/>`;
+      }
+
+      function pencilImage(x, top, height, opacity, blur) {
+        const direction = height >= 0 ? -1 : 1;
+        const base = axisY;
+        const actualTop = top;
+        return `<g opacity="${opacity}" ${blur ? 'filter="url(#softBlur)"' : ""}>
+          <line x1="${x}" y1="${base}" x2="${x}" y2="${actualTop}" stroke="#17a66a" stroke-width="9"/>
+          <polygon points="${x - 10},${actualTop + direction * -2} ${x + 10},${actualTop + direction * -2} ${x},${actualTop + direction * 17}"
+            fill="#73d8aa" stroke="#166b4b" transform="${direction === 1 ? `rotate(180 ${x} ${actualTop})` : ""}"/>
+        </g>`;
+      }
+
+      function drawScreen(p) {
+        const x = sx(state.screenX);
+        const screenImageTop = Number.isFinite(p.imageHeight) ? sy(p.imageHeight) : axisY;
+        const blur = p.v > 0 && !p.focused;
+        const imageMarkup = p.v > 0
+          ? pencilImage(x, screenImageTop, p.imageHeight, p.focused ? .95 : .28, blur)
+          : "";
+        $("#screenLayer").innerHTML = `
+          <rect x="${x - 22}" y="178" width="44" height="330" fill="#d7dadd" stroke="#8c9299" stroke-width="4"/>
+          <rect x="${x - 15}" y="190" width="30" height="306" fill="#dff5ff" stroke="#a4b2bb"/>
+          ${imageMarkup}
+          <text x="${x}" y="158" text-anchor="middle" fill="#555f68" font-size="17" font-weight="700">光屏</text>
+          <rect x="${x - 32}" y="150" width="64" height="380" fill="transparent" class="hit-area"/>`;
+      }
+
+      function drawImage(p) {
+        if (p.focused || !Number.isFinite(p.imageX) || !Number.isFinite(p.imageHeight)) {
+          $("#imageLayer").innerHTML = "";
+          return;
+        }
+        const x = sx(p.imageX);
+        const top = sy(p.imageHeight);
+        const imageBounds = { top: 12, bottom: 608 };
+        const visible = x > bounds.left && x < bounds.right && top > imageBounds.top && top < imageBounds.bottom;
+        const clippedDirection = top <= imageBounds.top ? "上方" : "下方";
+        $("#imageLayer").innerHTML = visible
+          ? `${pencilImage(x, top, p.imageHeight, .88, false)}
+             <text x="${x + 14}" y="${top + (p.imageHeight < 0 ? 28 : -12)}" fill="#087b4c" font-size="17" font-weight="700">${p.v > 0 ? "实像位置" : "虚像位置"}</text>`
+          : x > bounds.left && x < bounds.right
+            ? `<line x1="${x}" y1="${axisY}" x2="${x}" y2="${top <= imageBounds.top ? imageBounds.top : imageBounds.bottom}" stroke="#17a66a" stroke-width="5" stroke-dasharray="8 6"/>
+               <text x="${x + 12}" y="${top <= imageBounds.top ? imageBounds.top + 18 : imageBounds.bottom - 10}" fill="#087b4c" font-size="16">像尖在画面${clippedDirection}，高度仍按 m·h 计算</text>`
+            : "";
+      }
+
+      function drawFocus(p) {
+        if (!state.showFocus) {
+          $("#focusLayer").innerHTML = "";
+          return;
+        }
+        const positions = [
+          [state.lensX - p.fMag, "F"], [state.lensX + p.fMag, "F"],
+          [state.lensX - 2 * p.fMag, "2F"], [state.lensX + 2 * p.fMag, "2F"],
+        ];
+        $("#focusLayer").innerHTML = positions.map(([world, label]) => {
+          const x = sx(world);
+          if (x < 20 || x > 1380) return "";
+          return `<circle cx="${x}" cy="${axisY}" r="${label === "F" ? 8 : 4}" fill="${label === "F" ? "#ffea00" : "#7676a8"}" stroke="#222" stroke-width="2"/>
+            <text x="${x}" y="${axisY + 28}" text-anchor="middle" fill="#4f4f75" font-size="15">${label}</text>`;
+        }).join("");
+      }
+
+      function drawRays(p) {
+        if (state.rayMode === "none" || p.atFocus && state.rayMode === "edge") {
+          $("#rayLayer").innerHTML = "";
+          $("#extensionLayer").innerHTML = "";
+          return;
+        }
+        const objectTop = { x: sx(state.objectX), y: sy(state.objectHeight) };
+        const lensX = sx(state.lensX);
+        const imageTop = Number.isFinite(p.imageHeight) ? { x: sx(p.imageX), y: sy(p.imageHeight) } : null;
+        const rightFocus = { x: sx(state.lensX + p.fMag), y: axisY };
+        const leftFocus = { x: sx(state.lensX - p.fMag), y: axisY };
+        const lensTop = axisY - state.aperture * scale / 2;
+        const lensBottom = axisY + state.aperture * scale / 2;
+        let solid = "";
+        let dashed = "";
+
+        if (state.rayMode === "edge" || state.rayMode === "many") {
+          const count = state.rayMode === "edge" ? 2 : 7;
+          for (let i = 0; i < count; i += 1) {
+            const fraction = count === 1 ? .5 : i / (count - 1);
+            const hit = { x: lensX, y: lensTop + 8 + fraction * Math.max(1, lensBottom - lensTop - 16) };
+            solid += line(objectTop, hit, false, state.rayMode === "many" ? .62 : 1);
+            if (p.v > 0 && imageTop) {
+              solid += line(hit, boundaryEnd(hit, imageTop), false, state.rayMode === "many" ? .62 : 1);
+            } else if (imageTop) {
+              const end = boundaryEnd(hit, { x: hit.x + (hit.x - imageTop.x), y: hit.y + (hit.y - imageTop.y) });
+              solid += line(hit, end, false, state.rayMode === "many" ? .62 : 1);
+              if (state.showVirtual) dashed += line(hit, imageTop, true, .7);
+            }
+          }
+        } else {
+          const parallelHit = { x: lensX, y: objectTop.y };
+          solid += line(objectTop, parallelHit);
+          if (state.type === "convex") {
+            solid += line(parallelHit, boundaryEnd(parallelHit, rightFocus));
+          } else {
+            const divergent = { x: parallelHit.x + (parallelHit.x - leftFocus.x), y: parallelHit.y + (parallelHit.y - leftFocus.y) };
+            solid += line(parallelHit, boundaryEnd(parallelHit, divergent));
+            if (state.showVirtual) dashed += line(parallelHit, leftFocus, true);
+          }
+          const center = { x: lensX, y: axisY };
+          solid += line(objectTop, boundaryEnd(objectTop, center));
+
+          if (state.type === "convex") {
+            const dx = lensX - objectTop.x;
+            const focusDx = leftFocus.x - objectTop.x;
+            if (Math.abs(focusDx) > 2) {
+              const yAtLens = objectTop.y + (leftFocus.y - objectTop.y) * dx / focusDx;
+              const hit = { x: lensX, y: yAtLens };
+              if (hit.y > lensTop && hit.y < lensBottom) {
+                solid += line(objectTop, hit);
+                solid += line(hit, { x: bounds.right, y: hit.y });
+              }
+            }
+          } else {
+            const virtualRightF = rightFocus;
+            const yAtLens = objectTop.y + (virtualRightF.y - objectTop.y) * (lensX - objectTop.x) / (virtualRightF.x - objectTop.x);
+            const hit = { x: lensX, y: yAtLens };
+            if (hit.y > lensTop && hit.y < lensBottom) {
+              solid += line(objectTop, hit);
+              solid += line(hit, { x: bounds.right, y: hit.y });
+              if (state.showVirtual) dashed += line(hit, virtualRightF, true);
+            }
+          }
+
+          if (p.v < 0 && imageTop && state.showVirtual) {
+            dashed += line(parallelHit, imageTop, true);
+            dashed += line(center, imageTop, true);
+          }
+        }
+        $("#rayLayer").innerHTML = solid;
+        $("#extensionLayer").innerHTML = dashed;
+      }
+
+      function drawLabels(p) {
+        if (!state.showLabels) {
+          $("#labelLayer").innerHTML = "";
+          return;
+        }
+        const lensX = sx(state.lensX);
+        const objectX = sx(state.objectX);
+        const screenX = sx(state.screenX);
+        $("#labelLayer").innerHTML = `
+          <line x1="${objectX}" y1="570" x2="${lensX}" y2="570" stroke="#555" marker-start="url(#none)" />
+          <text x="${(objectX + lensX) / 2}" y="595" text-anchor="middle" fill="#333">u = ${p.u.toFixed(1)} cm</text>
+          <line x1="${lensX}" y1="570" x2="${screenX}" y2="570" stroke="#555"/>
+          <text x="${(lensX + screenX) / 2}" y="595" text-anchor="middle" fill="#333">s = ${p.screenDistance.toFixed(1)} cm</text>`;
+      }
+
+      function updateControls(p) {
+        $("#radius").value = state.radius;
+        $("#refractiveIndex").value = state.refractiveIndex;
+        $("#thickness").value = state.thickness;
+        $("#aperture").value = state.aperture;
+        $("#objectHeight").value = state.objectHeight;
+        $("#distance").value = Math.round(p.u);
+        $("#screenDistance").value = Math.round(p.screenDistance);
+        $("#radiusOut").textContent = `${state.radius.toFixed(0)} cm`;
+        $("#indexOut").textContent = state.refractiveIndex.toFixed(2);
+        $("#thicknessOut").textContent = `${state.thickness.toFixed(1)} cm`;
+        $("#apertureOut").textContent = `${state.aperture.toFixed(0)} cm`;
+        $("#heightOut").textContent = `${state.objectHeight.toFixed(0)} cm`;
+        $("#focalOut").textContent = `${p.f >= 0 ? "+" : "−"}${p.fMag.toFixed(1)} cm`;
+        $("#distanceOut").textContent = `${p.u.toFixed(1)} cm`;
+        $("#screenOut").textContent = `${p.screenDistance.toFixed(1)} cm`;
+        $("#vOut").textContent = p.atFocus ? "∞" : `${p.v.toFixed(1)} cm`;
+        $("#mOut").textContent = p.atFocus ? "∞" : p.m.toFixed(2).replace("-", "−");
+        $("#screenOutText").textContent = p.v <= 0 ? "不能承接虚像" : p.focused ? "清晰" : "未对焦";
+        const result = classify(p);
+        $("#imageChip").textContent = result.text;
+        $("#imageChip").className = `chip ${p.v > 0 ? "good" : "warn"}`;
+        $("#screenChip").textContent = p.v <= 0 ? "虚像不能呈现在光屏上" : p.focused ? "光屏成清晰像" : "移动光屏寻找清晰像";
+        $("#screenChip").className = `chip ${p.focused ? "good" : "warn"}`;
+        $("#convexTool").classList.toggle("active", state.type === "convex");
+        $("#concaveTool").classList.toggle("active", state.type === "concave");
+        $("#convexTool").setAttribute("aria-pressed", state.type === "convex");
+        $("#concaveTool").setAttribute("aria-pressed", state.type === "concave");
+      }
+
+      function draw() {
+        const p = physics();
+        drawFocus(p);
+        drawRays(p);
+        drawScreen(p);
+        drawImage(p);
+        drawLens();
+        drawObject();
+        drawLabels(p);
+        updateControls(p);
+        if ($("#learnPanel").classList.contains("open")) renderLearn();
+      }
+
+      function currentExplanation(p) {
+        const result = classify(p);
+        if (state.type === "concave") {
+          return {
+            title: "凹透镜为什么总成缩小的虚像？",
+            body: "凹透镜使入射光线发散。眼睛把发散光线反向延长后，延长线在物体与透镜之间相交，因此得到正立、缩小的虚像。虚像不是实际光线会聚形成的，所以不能被光屏承接。"
+          };
+        }
+        const key = caseKey(p);
+        const map = {
+          beyond2F: ["物体在二倍焦距以外", "像落在另一侧的一倍焦距与二倍焦距之间，形成倒立、缩小的实像。这是照相机成像的典型状态。"],
+          at2F: ["物体位于二倍焦距处", "像也位于另一侧二倍焦距处，形成倒立、等大的实像。"],
+          betweenF2F: ["物体在一倍焦距与二倍焦距之间", "像落在另一侧二倍焦距以外，形成倒立、放大的实像。这是投影仪的典型状态。"],
+          atF: ["物体位于焦点处", "经透镜后的光线互相平行，不会在有限距离内会聚，因此不能在有限位置得到清晰像。"],
+          insideF: ["物体位于焦点以内", "折射光线仍然发散，反向延长线在物体同侧相交，形成正立、放大的虚像。这是放大镜的工作状态。"]
+        };
+        return { title: map[key][0], body: `${map[key][1]} 当前实验结果为：${result.text}。` };
+      }
+
+      function renderExplain(p) {
+        const info = currentExplanation(p);
+        return `
+          <h3>${info.title}</h3>
+          <div class="explain-card">${info.body}</div>
+          <h4>先把专用名词说清楚</h4>
+          <div class="explain-card">
+            <p><b>折射率 n：</b>表示光进入这种材料后“减速和拐弯有多明显”。空气约为 1.00，普通玻璃约为 1.50。把筷子斜插进水里看起来像折断，就是光从水到空气时改变方向造成的。</p>
+            <p><b>曲率半径 R：</b>可以把透镜表面想成一个大球的一小块，R 就是那个球的半径。R 越小，表面鼓得越厉害，像勺背比大球表面更弯。</p>
+            <p><b>中心厚度 d：</b>透镜正中央从前表面到后表面的距离。它不是透镜的高度，也不是直径。</p>
+            <p><b>透镜口径 D：</b>透镜上下方向可供光线通过的有效宽度，类似窗户开口的大小。口径越大，能接收的光线通常越多，但不会单独改变焦距。</p>
+            <p><b>物体高度 h：</b>实验中铅笔从主轴到笔尖的高度。它会影响像有多高，但不会单独改变像距。</p>
+            <p><b>焦距 f：</b>平行光经过透镜后会聚到焦点，透镜中心到焦点的距离就是焦距。用放大镜在阳光下找最小最亮光斑时，放大镜到纸面的距离就接近焦距。</p>
+            <p><b>实像：</b>真实光线确实聚到的位置，所以能投到光屏或墙上，例如投影仪画面。<b>虚像：</b>光线没有真的聚在那里，只是眼睛顺着光线反向判断出来，例如照镜子看到的自己，因此不能用光屏接住。</p>
+            <p><b>放大率 m：</b>像的高度与物体高度之比。绝对值大于 1 表示像更大；负号只表示像倒立，不表示“大小为负”。</p>
+          </div>
+          <h4>观察当前实验</h4>
+          <ul class="steps">
+            <li>材料折射率 n = ${p.n.toFixed(2)}，表面曲率半径 R = ${state.radius.toFixed(1)} cm，中心厚度 d = ${p.d.toFixed(1)} cm，口径 D = ${state.aperture.toFixed(1)} cm。</li>
+            <li>这些透镜参数共同决定等效焦距 f = ${p.f.toFixed(1)} cm；物体到透镜的距离 u = ${p.u.toFixed(1)} cm。</li>
+            <li>${p.atFocus ? "折射光近似平行，要到非常远才会相交，课堂上简称“像在无穷远”。" : `计算得到像距 v = ${p.v.toFixed(1)} cm，也就是像与透镜之间的距离。`}</li>
+            <li>${p.atFocus ? "放大率没有有限值。" : `放大率 m = ${p.m.toFixed(2)}；符号决定正倒，绝对值决定大小。`}</li>
+            <li>${p.v > 0 ? "实际光线会聚形成实像，可以用光屏承接。" : "只有反向延长线相交，形成虚像，光屏无法承接。"}</li>
+          </ul>
+          <h4>建议操作</h4>
+          <p>${state.type === "convex" ? "缓慢把物体从 2F 外拖到 F 内，观察像的位置、大小和正倒如何变化。" : "改变物距，观察凹透镜的像为何始终位于物体与透镜之间。"}</p>`;
+      }
+
+      function renderDerive(p) {
+        const vText = p.atFocus ? "∞" : p.v.toFixed(2);
+        return `
+          <h3>从材料和形状推到成像位置</h3>
+          <p><b>近轴条件</b>是指只研究靠近主轴、与主轴夹角较小的光线。现实中的相机和眼镜也会尽量控制这些光线，以减少边缘模糊。</p>
+          <p>第一步用<b>透镜制造者公式</b>：它说明同样形状的透镜，玻璃越能使光转弯，焦距通常越短；表面越弯，聚光能力也越强。</p>
+          <div class="formula-card">1/f = (n−1)[1/R₁ − 1/R₂ + (n−1)d/(nR₁R₂)]</div>
+          <ol class="steps">
+            <li>当前 n = ${p.n.toFixed(2)}，R₁ = ${p.R1.toFixed(1)} cm，R₂ = ${p.R2.toFixed(1)} cm，d = ${p.d.toFixed(1)} cm。</li>
+            <li>代入后得到等效焦距 f = ${p.f.toFixed(2)} cm。“等效”表示把有厚度的真实透镜，近似看成一个具有相同聚光效果的简单透镜。</li>
+          </ol>
+          <p>第二步使用成像公式。物距 u 是物体到透镜的距离，像距 v 是像到透镜的距离。</p>
+          <div class="formula-card">1/f = 1/u + 1/v</div>
+          <ol class="steps">
+            <li>当前 f = ${p.f.toFixed(1)} cm，u = ${p.u.toFixed(1)} cm。</li>
+            <li>移项：1/v = 1/f − 1/u。</li>
+            <li>通分：1/v = (u − f)/(fu)。</li>
+            <li>取倒数：v = fu/(u − f) = ${vText} cm。</li>
+          </ol>
+          <div class="formula-card">m = h′/h = −v/u ${p.atFocus ? "" : `= ${p.m.toFixed(2)}`}</div>
+          <div class="explain-card">
+            <b>符号怎样读？</b><br>
+            f &gt; 0 表示凸透镜，f &lt; 0 表示凹透镜；v &gt; 0 表示实像，v &lt; 0 表示虚像；
+            m &lt; 0 表示倒立，m &gt; 0 表示正立。这里的正负号像地图上的方向标记，不是说长度真的小于零。
+          </div>`;
+      }
+
+      function renderCases(p) {
+        const current = caseKey(p);
+        const cases = [
+          ["beyond2F", "u > 2f", "倒立、缩小、实像；f < v < 2f"],
+          ["at2F", "u = 2f", "倒立、等大、实像；v = 2f"],
+          ["betweenF2F", "f < u < 2f", "倒立、放大、实像；v > 2f"],
+          ["atF", "u = f", "出射光平行，不成有限像"],
+          ["insideF", "u < f", "正立、放大、虚像；物像同侧"],
+          ["concave", "凹透镜", "始终为正立、缩小的虚像"]
+        ];
+        return `
+          <h3>成像规律总结</h3>
+          <div class="case-grid">${cases.map(([key, title, body]) =>
+            `<div class="case ${current === key ? "current" : ""}"><b>${title}</b><br>${body}</div>`
+          ).join("")}</div>
+          <div class="explain-card"><b>记忆线索：</b>一倍焦距分虚实，二倍焦距分大小；实像总倒立，虚像通常正立。</div>
+          <div class="explain-card"><b>生活中的对应：</b>照相机把远处景物缩小成像在感光元件上；投影仪把较小画面放大投到幕布上；放大镜把物体放在焦点以内形成正立放大的虚像；近视眼镜使用凹透镜让光先发散一些。</div>
+          <p>蓝色高亮框对应当前实验状态。规律不是用来替代实验，而是用来概括你刚刚观察到的变化。</p>`;
+      }
+
+      function renderQuiz(p) {
+        const correct = p.v > 0 ? "screen" : "virtual";
+        return `
+          <h3>根据当前实验作答</h3>
+          <div class="quiz-card">
+            <b>当前形成的像能否在光屏上得到？</b>
+            <button class="quiz-option" data-answer="screen" data-correct="${correct}">能，因为实际光线会聚</button>
+            <button class="quiz-option" data-answer="virtual" data-correct="${correct}">不能，因为它是虚像或没有有限像</button>
+            <p id="quizFeedback" aria-live="polite"></p>
+          </div>
+          <div class="quiz-card">
+            <b>挑战：</b>先关闭知识面板，仅凭光路判断像的性质；再打开面板核对。改变透镜类型或物距后，题目会随实验状态更新。
+          </div>`;
+      }
+
+      function renderLearn() {
+        const p = physics();
+        const renderers = { explain: renderExplain, derive: renderDerive, cases: renderCases, quiz: renderQuiz };
+        $("#learnContent").innerHTML = renderers[activeTab](p);
+        $$(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.tab === activeTab));
+      }
+
+      function openLearn(tab = "explain") {
+        activeTab = tab;
+        document.body.classList.add("learn-open");
+        $("#learnPanel").classList.add("open");
+        $("#learnPanel").setAttribute("aria-hidden", "false");
+        renderLearn();
+      }
+
+      function closeLearn() {
+        document.body.classList.remove("learn-open");
+        $("#learnPanel").classList.remove("open");
+        $("#learnPanel").setAttribute("aria-hidden", "true");
+      }
+
+      function setType(type) {
+        state.type = type;
+        draw();
+      }
+
+      function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+
+      function applyDistance(u) {
+        state.objectX = state.lensX - clamp(u, 12, 90);
+        draw();
+      }
+
+      function applyScreenDistance(s) {
+        state.screenX = state.lensX + clamp(s, 8, 90);
+        draw();
+      }
+
+      function pointerWorldX(event) {
+        const rect = stage.getBoundingClientRect();
+        return wx((event.clientX - rect.left) * 1400 / rect.width);
+      }
+
+      stage.addEventListener("pointerdown", event => {
+        const group = event.target.closest("[data-drag]");
+        if (!group) return;
+        dragTarget = group.dataset.drag;
+        stage.setPointerCapture(event.pointerId);
+      });
+      stage.addEventListener("pointermove", event => {
+        if (!dragTarget) return;
+        const world = pointerWorldX(event);
+        if (dragTarget === "object") state.objectX = clamp(world, -92, state.lensX - 12);
+        if (dragTarget === "lens") {
+          const previous = state.lensX;
+          state.lensX = clamp(world, -18, 18);
+          const shift = state.lensX - previous;
+          state.objectX += shift;
+          state.screenX += shift;
+        }
+        if (dragTarget === "screen") state.screenX = clamp(world, state.lensX + 8, state.lensX + 90);
+        draw();
+      });
+      stage.addEventListener("pointerup", () => { dragTarget = null; });
+      stage.addEventListener("pointercancel", () => { dragTarget = null; });
+      $("#screenLayer").addEventListener("dblclick", () => {
+        const p = physics();
+        if (p.v > 0 && p.v <= 90) applyScreenDistance(p.v);
+      });
+
+      $("#convexTool").addEventListener("click", () => setType("convex"));
+      $("#concaveTool").addEventListener("click", () => setType("concave"));
+      $("#radius").addEventListener("input", event => { state.radius = Number(event.target.value); draw(); });
+      $("#refractiveIndex").addEventListener("input", event => { state.refractiveIndex = Number(event.target.value); draw(); });
+      $("#thickness").addEventListener("input", event => { state.thickness = Number(event.target.value); draw(); });
+      $("#aperture").addEventListener("input", event => { state.aperture = Number(event.target.value); draw(); });
+      $("#objectHeight").addEventListener("input", event => { state.objectHeight = Number(event.target.value); draw(); });
+      $("#distance").addEventListener("input", event => applyDistance(Number(event.target.value)));
+      $("#screenDistance").addEventListener("input", event => applyScreenDistance(Number(event.target.value)));
+      $$('input[name="rayMode"]').forEach(input => input.addEventListener("change", event => { state.rayMode = event.target.value; draw(); }));
+      $("#showFocus").addEventListener("change", event => { state.showFocus = event.target.checked; draw(); });
+      $("#showVirtual").addEventListener("change", event => { state.showVirtual = event.target.checked; draw(); });
+      $("#showLabels").addEventListener("change", event => { state.showLabels = event.target.checked; draw(); });
+      $$("[data-step]").forEach(button => button.addEventListener("click", () => {
+        const delta = Number(button.dataset.delta);
+        if (button.dataset.step === "radius") state.radius = clamp(state.radius + delta, 12, 40);
+        if (button.dataset.step === "index") state.refractiveIndex = clamp(state.refractiveIndex + delta, 1.30, 1.80);
+        if (button.dataset.step === "thickness") state.thickness = clamp(state.thickness + delta, 1, 10);
+        if (button.dataset.step === "aperture") state.aperture = clamp(state.aperture + delta, 35, 70);
+        if (button.dataset.step === "height") state.objectHeight = clamp(state.objectHeight + delta, 8, 26);
+        if (button.dataset.step === "distance") applyDistance(physics().u + delta);
+        if (button.dataset.step === "screen") applyScreenDistance(physics().screenDistance + delta);
+        draw();
+      }));
+      $("#autoFocus").addEventListener("click", () => {
+        const p = physics();
+        if (p.v > 0 && p.v <= 90) applyScreenDistance(p.v);
+        else openLearn("explain");
+      });
+      $("#reset").addEventListener("click", () => {
+        Object.assign(state, defaults, { rayMode: "principal", showFocus: true, showVirtual: true, showLabels: false });
+        $('input[name="rayMode"][value="principal"]').checked = true;
+        $("#showFocus").checked = true;
+        $("#showVirtual").checked = true;
+        $("#showLabels").checked = false;
+        draw();
+      });
+      $("#openLearn").addEventListener("click", () => openLearn("explain"));
+      $("#bottomLearn").addEventListener("click", () => openLearn("explain"));
+      $("#bottomDerive").addEventListener("click", () => openLearn("derive"));
+      $("#bottomQuiz").addEventListener("click", () => openLearn("quiz"));
+      $("#closeLearn").addEventListener("click", closeLearn);
+      $$(".tab").forEach(tab => tab.addEventListener("click", () => { activeTab = tab.dataset.tab; renderLearn(); }));
+      $("#learnContent").addEventListener("click", event => {
+        const option = event.target.closest(".quiz-option");
+        if (!option) return;
+        $$(".quiz-option").forEach(item => item.classList.remove("correct", "wrong"));
+        const correct = option.dataset.answer === option.dataset.correct;
+        option.classList.add(correct ? "correct" : "wrong");
+        $("#quizFeedback").textContent = correct
+          ? "回答正确。判断关键是看折射后的实际光线是否真正会聚。"
+          : "再观察光线：实际光线会聚才可在光屏上成像，反向延长线相交只能形成虚像。";
+      });
+      window.addEventListener("keydown", event => { if (event.key === "Escape") closeLearn(); });
+
+      requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>

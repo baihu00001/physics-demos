@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>糖糖和糖豆｜抛体运动交互演示</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #151d33;
+      --grid: #2a3656;
+      --text: #f3f6ff;
+      --muted: #aebbd8;
+      --position: #5aa9ff;
+      --velocity: #65d68e;
+      --acceleration: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #182443, var(--bg) 65%);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    }
+    main { width: min(1100px, 96vw); margin: 0 auto; padding: 24px 0 36px; }
+    .brand-lockup { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .brand-logo {
+      width: 70px;
+      height: 70px;
+      flex: 0 0 auto;
+      object-fit: cover;
+      border: 2px solid #ff8a45;
+      border-radius: 16px;
+      background: #fff;
+    }
+    .brand-name { color: #ff9a61; font-size: 20px; font-weight: 900; letter-spacing: .06em; }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 38px); }
+    .subtitle { color: var(--muted); margin: 0 0 18px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; }
+    .card { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid #33415f; border-radius: 16px; }
+    .stage { padding: 12px; min-height: 480px; }
+    svg { display: block; width: 100%; height: 456px; border-radius: 10px; background: #0a1224; }
+    .controls { padding: 18px; }
+    label { display: block; margin: 0 0 18px; color: var(--muted); }
+    label span { display: flex; justify-content: space-between; color: var(--text); margin-bottom: 7px; }
+    input[type="range"] { width: 100%; accent-color: var(--position); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button { border: 0; border-radius: 10px; padding: 11px; font: inherit; font-weight: 700; cursor: pointer; }
+    #toggle { background: var(--position); color: #06101e; }
+    #reset { background: #34415f; color: var(--text); }
+    dl { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; margin: 20px 0 0; }
+    dt { color: var(--muted); }
+    dd { margin: 0; font-variant-numeric: tabular-nums; }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; color: var(--muted); font-size: 14px; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; }
+      .stage { min-height: 360px; }
+      svg { height: 336px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="brand-lockup">
+      <img class="brand-logo" src="assets/tangtang-tangdou-logo-clean.png" alt="糖糖和糖豆：背书包举手的学生和一只猫">
+      <div>
+        <div class="brand-name">糖糖和糖豆</div>
+        <h1>抛体运动交互演示</h1>
+        <p class="subtitle">忽略空气阻力，取重力加速度 g = 9.8 m/s²。拖动参数后可立即观察轨迹变化。</p>
+      </div>
+    </header>
+    <section class="layout">
+      <div class="card stage">
+        <svg id="stage" viewBox="0 0 760 456" role="img" aria-label="抛体运动轨迹、速度和重力加速度矢量">
+          <defs>
+            <marker id="greenArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#65d68e"/></marker>
+            <marker id="redArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#ff6b6b"/></marker>
+          </defs>
+          <g id="grid"></g>
+          <line x1="48" y1="408" x2="730" y2="408" stroke="#dbe6ff" stroke-width="2"/>
+          <line x1="48" y1="408" x2="48" y2="28" stroke="#dbe6ff" stroke-width="2"/>
+          <text x="724" y="432" fill="#aebbd8">x</text>
+          <text x="28" y="36" fill="#aebbd8">y</text>
+          <polyline id="path" fill="none" stroke="#5aa9ff" stroke-width="3"/>
+          <circle id="ball" r="8" fill="#5aa9ff"/>
+          <line id="velocityVector" stroke="#65d68e" stroke-width="3" marker-end="url(#greenArrow)"/>
+          <line id="gravityVector" stroke="#ff6b6b" stroke-width="3" marker-end="url(#redArrow)"/>
+          <text id="velocityLabel" fill="#65d68e">v</text>
+          <text id="gravityLabel" fill="#ff6b6b">g</text>
+        </svg>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--position)"></i>轨迹</span>
+          <span><i class="dot" style="background:var(--velocity)"></i>速度 v</span>
+          <span><i class="dot" style="background:var(--acceleration)"></i>重力加速度 g</span>
+        </div>
+      </div>
+      <aside class="card controls">
+        <label>
+          <span><b>初速度</b><output id="speedOutput">20 m/s</output></span>
+          <input id="speed" type="range" min="5" max="35" step="1" value="20">
+        </label>
+        <label>
+          <span><b>发射角</b><output id="angleOutput">45°</output></span>
+          <input id="angle" type="range" min="10" max="80" step="1" value="45">
+        </label>
+        <div class="buttons">
+          <button id="toggle" type="button">播放</button>
+          <button id="reset" type="button">重置</button>
+        </div>
+        <dl>
+          <dt>时间 t</dt><dd id="timeValue">0.00 s</dd>
+          <dt>水平速度 vx</dt><dd id="vxValue">0.00 m/s</dd>
+          <dt>竖直速度 vy</dt><dd id="vyValue">0.00 m/s</dd>
+          <dt>最大高度</dt><dd id="heightValue">0.00 m</dd>
+          <dt>水平射程</dt><dd id="rangeValue">0.00 m</dd>
+        </dl>
+      </aside>
+    </section>
+  </main>
+  <script>
+    (() => {
+      "use strict";
+      const g = 9.8;
+      const svg = document.querySelector("#stage");
+      const speed = document.querySelector("#speed");
+      const angle = document.querySelector("#angle");
+      const toggle = document.querySelector("#toggle");
+      const reset = document.querySelector("#reset");
+      const path = document.querySelector("#path");
+      const ball = document.querySelector("#ball");
+      const velocityVector = document.querySelector("#velocityVector");
+      const gravityVector = document.querySelector("#gravityVector");
+      const velocityLabel = document.querySelector("#velocityLabel");
+      const gravityLabel = document.querySelector("#gravityLabel");
+      const origin = { x: 48, y: 408 };
+      let time = 0;
+      let playing = false;
+      let previousFrame = null;
+
+      function parameters() {
+        const v0 = Number(speed.value);
+        const theta = Number(angle.value) * Math.PI / 180;
+        const vx = v0 * Math.cos(theta);
+        const vy0 = v0 * Math.sin(theta);
+        const flightTime = 2 * vy0 / g;
+        return { v0, theta, vx, vy0, flightTime, range: vx * flightTime, maxHeight: vy0 ** 2 / (2 * g) };
+      }
+
+      function modelAt(t, p) {
+        return { x: p.vx * t, y: Math.max(0, p.vy0 * t - 0.5 * g * t ** 2), vx: p.vx, vy: p.vy0 - g * t };
+      }
+
+      function scaleFor(p) {
+        const xScale = 650 / Math.max(1, p.range);
+        const yScale = 330 / Math.max(1, p.maxHeight);
+        return Math.min(xScale, yScale);
+      }
+
+      function screenPoint(state, scale) {
+        return { x: origin.x + state.x * scale, y: origin.y - state.y * scale };
+      }
+
+      function setLine(line, a, b) {
+        line.setAttribute("x1", a.x);
+        line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x);
+        line.setAttribute("y2", b.y);
+      }
+
+      function drawGrid() {
+        const grid = document.querySelector("#grid");
+        let markup = "";
+        for (let x = 48; x <= 730; x += 68) markup += `<line x1="${x}" y1="28" x2="${x}" y2="408" stroke="#2a3656"/>`;
+        for (let y = 68; y <= 408; y += 68) markup += `<line x1="48" y1="${y}" x2="730" y2="${y}" stroke="#2a3656"/>`;
+        grid.innerHTML = markup;
+      }
+
+      function draw() {
+        const p = parameters();
+        time = Math.min(time, p.flightTime);
+        const scale = scaleFor(p);
+        const state = modelAt(time, p);
+        const point = screenPoint(state, scale);
+        const samples = 80;
+        const points = [];
+        for (let i = 0; i <= samples; i += 1) {
+          const sample = modelAt(p.flightTime * i / samples, p);
+          const screen = screenPoint(sample, scale);
+          points.push(`${screen.x.toFixed(1)},${screen.y.toFixed(1)}`);
+        }
+        path.setAttribute("points", points.join(" "));
+        ball.setAttribute("cx", point.x);
+        ball.setAttribute("cy", point.y);
+
+        const vectorScale = 3;
+        const velocityEnd = { x: point.x + state.vx * vectorScale, y: point.y - state.vy * vectorScale };
+        const gravityEnd = { x: point.x, y: point.y + 54 };
+        setLine(velocityVector, point, velocityEnd);
+        setLine(gravityVector, point, gravityEnd);
+        velocityLabel.setAttribute("x", velocityEnd.x + 5);
+        velocityLabel.setAttribute("y", velocityEnd.y - 5);
+        gravityLabel.setAttribute("x", gravityEnd.x + 7);
+        gravityLabel.setAttribute("y", gravityEnd.y);
+
+        document.querySelector("#speedOutput").textContent = `${p.v0.toFixed(0)} m/s`;
+        document.querySelector("#angleOutput").textContent = `${angle.value}°`;
+        document.querySelector("#timeValue").textContent = `${time.toFixed(2)} s`;
+        document.querySelector("#vxValue").textContent = `${state.vx.toFixed(2)} m/s`;
+        document.querySelector("#vyValue").textContent = `${state.vy.toFixed(2)} m/s`;
+        document.querySelector("#heightValue").textContent = `${p.maxHeight.toFixed(2)} m`;
+        document.querySelector("#rangeValue").textContent = `${p.range.toFixed(2)} m`;
+      }
+
+      function setPlaying(next) {
+        playing = next;
+        toggle.textContent = playing ? "暂停" : "播放";
+        previousFrame = null;
+      }
+
+      function restart() {
+        time = 0;
+        setPlaying(false);
+        draw();
+      }
+
+      function frame(timestamp) {
+        if (playing) {
+          if (previousFrame !== null) time += Math.min(0.05, (timestamp - previousFrame) / 1000);
+          previousFrame = timestamp;
+          const p = parameters();
+          if (time >= p.flightTime) {
+            time = p.flightTime;
+            setPlaying(false);
+          }
+          draw();
+        }
+        requestAnimationFrame(frame);
+      }
+
+      toggle.addEventListener("click", () => {
+        if (!playing && time >= parameters().flightTime) time = 0;
+        setPlaying(!playing);
+      });
+      reset.addEventListener("click", restart);
+      speed.addEventListener("input", restart);
+      angle.addEventListener("input", restart);
+      drawGrid();
+      draw();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

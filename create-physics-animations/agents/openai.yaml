@@ -1,0 +1,4 @@
+interface:
+  display_name: "物理动态演示"
+  short_description: "制作准确直观的初高中物理教学动画与零依赖交互实验演示"
+  default_prompt: "使用 $create-physics-animations 制作一个可调初速度和发射角的抛体运动交互演示。"

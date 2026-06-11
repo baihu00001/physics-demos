@@ -1,0 +1,7 @@
+# Editor and operating-system temporary files
+~$*
+Thumbs.db
+.DS_Store
+
+# Keep only the cleaned, watermark-free brand asset in version control.
+**/tangtang-tangdou-logo.jpg

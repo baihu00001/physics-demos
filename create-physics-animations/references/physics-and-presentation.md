@@ -39,6 +39,7 @@
 - Use concise labels such as `速度 v` and `加速度 a`.
 - Introduce symbols before using them in equations.
 - Explain each specialist term in plain Chinese suitable for a middle-school self-learner when it first appears.
+- For each specialist term, give the standard professional definition first, then a plain explanation or real example, and finally an explicit comparison with the nearest commonly confused term.
 - Connect each specialist term to a real, familiar phenomenon or device before relying on an abstract formula.
 - Prefer one conclusion per animation beat.
 - Explain the physical meaning after presenting a formula.

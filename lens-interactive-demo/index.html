@@ -303,6 +303,47 @@
     .learn-content h3 { margin: 0 0 10px; }
     .learn-content h4 { margin: 22px 0 8px; }
     .learn-content p { margin: 8px 0; }
+    .term-list { display: grid; gap: 10px; margin: 12px 0; }
+    .term-card {
+      overflow: hidden;
+      border: 1px solid #cbd9e3;
+      border-radius: 11px;
+      background: #fff;
+    }
+    .term-card[open] { border-color: #73b9dc; box-shadow: 0 3px 12px #258fca18; }
+    .term-card summary {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #f4fbff;
+      cursor: pointer;
+      font-weight: 800;
+      list-style: none;
+    }
+    .term-card summary::-webkit-details-marker { display: none; }
+    .term-card summary::after { content: "＋"; margin-left: auto; color: var(--blue-dark); font-size: 18px; }
+    .term-card[open] summary::after { content: "−"; }
+    .term-symbol {
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: #e2f3fb;
+      color: var(--blue-dark);
+      font-family: "Times New Roman", serif;
+      font-weight: 700;
+    }
+    .term-current { color: #ad5100; font-size: 12px; font-weight: 700; }
+    .term-body { padding: 5px 14px 13px; }
+    .term-layer {
+      margin-top: 10px;
+      padding: 10px 11px;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .term-layer strong { display: block; margin-bottom: 3px; color: #27364b; }
+    .term-layer.plain { border-left: 4px solid #4fa8d4; }
+    .term-layer.confuse { border-left: 4px solid #f29a3f; background: #fff9f1; }
     .formula-card, .explain-card, .quiz-card {
       margin: 12px 0;
       padding: 14px;
@@ -631,6 +672,8 @@
       const state = { ...defaults, rayMode: "principal", showFocus: true, showVirtual: true, showLabels: false };
       let activeTab = "explain";
       let dragTarget = null;
+      let lastTermKey = null;
+      const termOpenOverrides = new Map();
 
       const sx = worldX => 700 + worldX * scale;
       const sy = worldY => axisY - worldY * scale;
@@ -949,22 +992,203 @@
         return { title: map[key][0], body: `${map[key][1]} 当前实验结果为：${result.text}。` };
       }
 
+      function termData(p) {
+        const finiteV = p.atFocus ? "当前没有有限像距" : `当前 v = ${p.v.toFixed(1)} cm`;
+        const imageKind = p.v > 0 ? "实像" : "虚像";
+        const orientation = p.m < 0 ? "倒立" : "正立";
+        const sizeKind = Math.abs(p.m) > 1.04 ? "放大" : Math.abs(p.m) < .96 ? "缩小" : "等大";
+        return [
+          {
+            key: "lensType", name: "透镜类型", symbol: state.type === "convex" ? "凸透镜" : "凹透镜", current: `当前：${state.type === "convex" ? "凸透镜" : "凹透镜"}`,
+            standard: "凸透镜中央厚、边缘薄，对近轴平行光有会聚作用；凹透镜中央薄、边缘厚，对近轴平行光有发散作用。",
+            plain: "凸透镜像放大镜，能把太阳光聚成小光斑；凹透镜像近视眼镜片，会让光束散开。",
+            confuse: "会聚或发散描述的是透镜对光线方向的作用，不等同于一定形成实像或虚像。凸透镜在物体位于焦点内时也形成虚像。"
+          },
+          {
+            key: "principalAxis", name: "主光轴", symbol: "—",
+            standard: "通过透镜两个球面曲率中心的直线称为主光轴；在本演示中，它是贯穿透镜中心的水平虚线。",
+            plain: "可以把它理解成摆放透镜和物体时用来对齐的中心基准线。",
+            confuse: "主光轴不是一条真实光线，也不是光的传播路径；它只是描述位置和方向的参考线。"
+          },
+          {
+            key: "focus", name: "焦点", symbol: "F", current: `当前距透镜约 ${p.fMag.toFixed(1)} cm`,
+            standard: "近轴平行于主光轴的光线经凸透镜折射后会聚于主轴上的点，或经凹透镜折射后的反向延长线相交于主轴上的点，该点称为焦点。",
+            plain: "凸透镜把远处太阳光聚成最小亮点时，那个亮点接近焦点。",
+            confuse: "焦点是透镜本身的特征点；像点由具体物体发出的光线形成。改变物距会改变像点，却不会在透镜参数不变时改变焦点。"
+          },
+          {
+            key: "doubleFocus", name: "二倍焦距位置", symbol: "2F", current: `当前距透镜约 ${(2 * p.fMag).toFixed(1)} cm`,
+            standard: "主光轴上到透镜光心距离等于两倍焦距的位置称为二倍焦距位置，记作 2F。",
+            plain: "它像尺子上的一个重要刻度，用来判断凸透镜成像是放大、等大还是缩小。",
+            confuse: "2F 是位置标记，不是第二个焦点。每侧只有一个焦点 F，2F 只是距离为 2f 的位置。"
+          },
+          {
+            key: "focalLength", name: "焦距", symbol: "f", current: `当前 f = ${p.f.toFixed(1)} cm`,
+            standard: "在近轴条件下，透镜光心到焦点的距离称为焦距；符号约定中凸透镜焦距为正，凹透镜焦距为负。",
+            plain: "用凸透镜把远处景物在白纸上调到最清晰时，透镜到纸面的距离大约就是焦距。",
+            confuse: "焦距由透镜材料和形状决定，不是物体到透镜的距离。焦距与物距都用厘米表示，但物理意义不同。"
+          },
+          {
+            key: "curvatureRadius", name: "曲率半径", symbol: "R", current: `当前 R = ${state.radius.toFixed(1)} cm`,
+            standard: "把透镜球面补成完整球面时，该球面的半径称为曲率半径；其大小反映表面的弯曲程度。",
+            plain: "把透镜表面想成大球上切下来的一小块：球越小，表面越弯，曲率半径越小。",
+            confuse: "曲率半径描述表面有多弯；透镜口径描述可用开口有多宽。两者都可能画成长度，但不是同一尺寸。"
+          },
+          {
+            key: "refractiveIndex", name: "折射率", symbol: "n", current: `当前 n = ${p.n.toFixed(2)}`,
+            standard: "介质的绝对折射率等于真空中光速与光在该介质中传播速度之比，反映介质对光传播速度和折射方向的影响。",
+            plain: "光从空气进入玻璃会减速并改变方向。筷子斜插进水里看起来弯折，就是不同介质折射率不同造成的。",
+            confuse: "折射率不是折射角。折射率是材料的性质；折射角是某一次光线通过界面后与法线的夹角。"
+          },
+          {
+            key: "thickness", name: "中心厚度", symbol: "d", current: `当前 d = ${p.d.toFixed(1)} cm`,
+            standard: "透镜沿主光轴方向，前后两个表面顶点之间的距离称为中心厚度。",
+            plain: "从透镜正中央沿水平方向量它有多厚，就是中心厚度。",
+            confuse: "中心厚度不是上下方向的透镜口径，也不是表面的曲率半径。"
+          },
+          {
+            key: "aperture", name: "透镜口径", symbol: "D", current: `当前 D = ${state.aperture.toFixed(1)} cm`,
+            standard: "透镜允许光线通过的有效通光区域直径称为透镜口径。",
+            plain: "它像窗户开口的大小：开口大通常能通过更多光线。",
+            confuse: "口径主要影响通光量和可通过的光线范围；曲率半径描述表面弯曲，中心厚度描述前后厚度。"
+          },
+          {
+            key: "objectHeight", name: "物体高度", symbol: "h", current: `当前 h = ${state.objectHeight.toFixed(1)} cm`,
+            standard: "物体高度是物体垂直于主光轴方向的线性尺寸，本演示取主轴到铅笔顶端的距离。",
+            plain: "就是演示中铅笔从主轴到笔尖有多高。",
+            confuse: "物体高度会影响像的实际高度，但在近轴模型中不会单独改变像距。"
+          },
+          {
+            key: "objectDistance", name: "物距", symbol: "u", current: `当前 u = ${p.u.toFixed(1)} cm`,
+            standard: "物体上选定的物点到透镜参考位置沿主光轴方向的距离称为物距。",
+            plain: "在这里就是铅笔到透镜中央的水平距离。",
+            confuse: "物距不是焦距。移动铅笔会改变物距；透镜参数不变时焦距保持不变。"
+          },
+          {
+            key: "imageDistance", name: "像距", symbol: "v", current: finiteV,
+            standard: "像点到透镜参考位置沿主光轴方向的距离称为像距；本演示约定实像像距为正、虚像像距为负。",
+            plain: "它表示按光路规律算出的清晰像应该出现在透镜哪一侧、离透镜多远。",
+            confuse: "像距由成像规律决定；光屏距离是人实际把光屏放置的位置。两者相等时，实像才会清晰落在光屏上。"
+          },
+          {
+            key: "screenDistance", name: "光屏距离", symbol: "s", current: `当前 s = ${p.screenDistance.toFixed(1)} cm`,
+            standard: "光屏距离是光屏平面到透镜参考位置沿主光轴方向的实际距离。",
+            plain: "就是你把白色光屏摆在离透镜多远的位置。",
+            confuse: `光屏距离是可调的器材位置，像距是光学计算结果。当前${p.focused ? "二者接近，光屏成清晰像" : "二者不一致，光屏不能得到清晰像"}。`
+          },
+          {
+            key: "magnification", name: "横向放大率", symbol: "m", current: p.atFocus ? "当前无有限值" : `当前 m = ${p.m.toFixed(2)}`,
+            standard: "横向放大率等于像高与物高之比，在本符号约定下 m = h′/h = −v/u；正负表示正倒，绝对值表示大小关系。",
+            plain: "|m| = 2 表示像高约为物高的两倍；m 前的负号表示像倒立，不是高度为负。",
+            confuse: "放大率是比例，没有长度单位；像的实际高度是具体长度。相同放大率配上不同物高，会得到不同像高。"
+          },
+          {
+            key: "realImage", name: "实像", symbol: imageKind === "实像" ? "当前" : "",
+            standard: "实际光线会聚形成的像称为实像，实像能够被放置在像面处的光屏承接。",
+            plain: "投影仪把画面投到幕布上，幕布上的画面就是实像。",
+            confuse: "实像与虚像的关键区别不是正立或倒立，而是实际光线是否真的会聚。"
+          },
+          {
+            key: "virtualImage", name: "虚像", symbol: imageKind === "虚像" ? "当前" : "",
+            standard: "实际光线没有会聚，而由发散光线的反向延长线相交形成的视觉位置称为虚像，不能用光屏承接。",
+            plain: "照镜子看到镜后的自己是虚像，看得到，但把纸放到镜后接不到那个像。",
+            confuse: "虚像不是虚假的错觉，它具有确定位置并能被眼睛或相机观察；只是该位置没有实际光线会聚。"
+          },
+          {
+            key: "upright", name: "正立", symbol: orientation === "正立" ? "当前" : "",
+            standard: "像相对于物体在上下方向保持相同朝向，称为正立。",
+            plain: "物体笔尖朝上，像的笔尖也朝上。",
+            confuse: "正立描述方向，不表示像一定放大。凹透镜形成的虚像通常正立但缩小。"
+          },
+          {
+            key: "inverted", name: "倒立", symbol: orientation === "倒立" ? "当前" : "",
+            standard: "像相对于物体在上下方向发生反转，称为倒立。",
+            plain: "物体笔尖朝上，像的笔尖朝下。",
+            confuse: "倒立描述方向，不表示像一定缩小。投影仪形成的实像倒立但可以放大。"
+          },
+          {
+            key: "enlarged", name: "放大", symbol: sizeKind === "放大" ? "当前" : "",
+            standard: "像的线性尺寸大于物体对应线性尺寸，即横向放大率绝对值 |m| > 1，称为放大。",
+            plain: "像中的铅笔比原来的铅笔画得更高。",
+            confuse: "放大描述像与物的大小比例，不等同于放大率的正负；正负表示正立或倒立。"
+          },
+          {
+            key: "reduced", name: "缩小", symbol: sizeKind === "缩小" ? "当前" : "",
+            standard: "像的线性尺寸小于物体对应线性尺寸，即横向放大率绝对值 |m| < 1，称为缩小。",
+            plain: "相机把高楼记录成感光元件上的小图像，就是缩小成像。",
+            confuse: "缩小不表示像一定是虚像。照相机得到的通常是倒立、缩小的实像。"
+          },
+          {
+            key: "principalRays", name: "主要光线", symbol: "三条",
+            standard: "主要光线是近轴几何光学中用于快速作图的特殊光线，包括平行主轴后过焦点、过光心近似不偏折、过焦点后平行主轴等。",
+            plain: "它们像画光路时选用的三条快捷路线，用少量光线就能找到像的位置。",
+            confuse: "主要光线不是物体只发出的三条光。物体实际向许多方向发光，主要光线只是便于作图。"
+          },
+          {
+            key: "edgeRays", name: "边缘光线", symbol: "口径边缘",
+            standard: "通过或接近光学系统有效口径边缘的光线称为边缘光线。",
+            plain: "它们是刚好从透镜开口上边或下边通过的光线，可帮助观察口径限制。",
+            confuse: "边缘光线按通过位置命名；主要光线按特殊传播规律选取，两种分类依据不同。"
+          },
+          {
+            key: "virtualExtension", name: "虚光线延长线", symbol: "虚线",
+            standard: "将发散的实际光线沿其反方向作出的几何延长线称为虚光线延长线，用于确定虚像位置。",
+            plain: "眼睛会把进入眼中的光沿直线反推来源，虚线表示这种反向寻找的位置。",
+            confuse: "延长线不是光真正传播过的路径，所以用虚线绘制；实线才表示实际光线。"
+          },
+          {
+            key: "paraxial", name: "近轴条件", symbol: "近轴",
+            standard: "光线靠近主光轴且与主光轴夹角较小的条件称为近轴条件，在此条件下可采用小角度近似和简单成像公式。",
+            plain: "只研究从透镜中部、方向不太斜的光线，计算会更准确也更简单。",
+            confuse: "近轴不是“紧贴主轴”或“只能有一条光线”，而是一组角度较小、离轴不远的光线范围。"
+          },
+          {
+            key: "effectiveFocal", name: "等效焦距", symbol: "f", current: `当前 f = ${p.f.toFixed(1)} cm`,
+            standard: "用一个理想薄透镜等效表示实际有厚度透镜整体会聚或发散能力时，该等效系统的焦距称为等效焦距。",
+            plain: "真实透镜有厚度，计算时把它看成一片具有同样聚光效果的简化透镜，这片简化透镜的焦距就是等效焦距。",
+            confuse: "等效焦距不是简单等于透镜中心厚度，也不是光屏调清晰后的任意距离。"
+          },
+          {
+            key: "lensmaker", name: "透镜制造者公式", symbol: "1/f",
+            standard: "透镜制造者公式描述透镜焦距与材料折射率、两个表面曲率半径及中心厚度之间的定量关系。",
+            plain: "它回答“用什么玻璃、把两面磨多弯、做多厚，会得到多强的聚光能力”。",
+            confuse: "制造者公式用透镜材料和形状求焦距；成像公式用焦距和物距求像距，二者用途不同。"
+          }
+        ];
+      }
+
+      function automaticTermKeys(p) {
+        const keys = [];
+        if (lastTermKey) keys.push(lastTermKey);
+        keys.push(state.type === "convex" ? "lensType" : "virtualImage");
+        if (p.atFocus) keys.push("focus", "focalLength");
+        else keys.push(p.v > 0 ? "realImage" : "virtualImage", Math.abs(p.m) > 1.04 ? "enlarged" : "reduced");
+        return [...new Set(keys)].slice(0, 3);
+      }
+
+      function renderTermCards(p) {
+        const autoOpen = new Set(automaticTermKeys(p));
+        return `<div class="term-list">${termData(p).map(term => {
+          const open = termOpenOverrides.has(term.key) ? termOpenOverrides.get(term.key) : autoOpen.has(term.key);
+          return `<details class="term-card" data-term-key="${term.key}" ${open ? "open" : ""}>
+            <summary><span>${term.name}</span>${term.symbol ? `<span class="term-symbol">${term.symbol}</span>` : ""}${term.current ? `<span class="term-current">${term.current}</span>` : ""}</summary>
+            <div class="term-body">
+              <div class="term-layer"><strong>标准定义</strong>${term.standard}</div>
+              <div class="term-layer plain"><strong>通俗理解与实例</strong>${term.plain}</div>
+              <div class="term-layer confuse"><strong>容易混淆</strong>${term.confuse}</div>
+            </div>
+          </details>`;
+        }).join("")}</div>`;
+      }
+
       function renderExplain(p) {
         const info = currentExplanation(p);
         return `
           <h3>${info.title}</h3>
           <div class="explain-card">${info.body}</div>
-          <h4>先把专用名词说清楚</h4>
-          <div class="explain-card">
-            <p><b>折射率 n：</b>表示光进入这种材料后“减速和拐弯有多明显”。空气约为 1.00，普通玻璃约为 1.50。把筷子斜插进水里看起来像折断，就是光从水到空气时改变方向造成的。</p>
-            <p><b>曲率半径 R：</b>可以把透镜表面想成一个大球的一小块，R 就是那个球的半径。R 越小，表面鼓得越厉害，像勺背比大球表面更弯。</p>
-            <p><b>中心厚度 d：</b>透镜正中央从前表面到后表面的距离。它不是透镜的高度，也不是直径。</p>
-            <p><b>透镜口径 D：</b>透镜上下方向可供光线通过的有效宽度，类似窗户开口的大小。口径越大，能接收的光线通常越多，但不会单独改变焦距。</p>
-            <p><b>物体高度 h：</b>实验中铅笔从主轴到笔尖的高度。它会影响像有多高，但不会单独改变像距。</p>
-            <p><b>焦距 f：</b>平行光经过透镜后会聚到焦点，透镜中心到焦点的距离就是焦距。用放大镜在阳光下找最小最亮光斑时，放大镜到纸面的距离就接近焦距。</p>
-            <p><b>实像：</b>真实光线确实聚到的位置，所以能投到光屏或墙上，例如投影仪画面。<b>虚像：</b>光线没有真的聚在那里，只是眼睛顺着光线反向判断出来，例如照镜子看到的自己，因此不能用光屏接住。</p>
-            <p><b>放大率 m：</b>像的高度与物体高度之比。绝对值大于 1 表示像更大；负号只表示像倒立，不表示“大小为负”。</p>
-          </div>
+          <h4>专业名词：先准确，再理解，再辨析</h4>
+          <p>点击名词可展开或收起。系统会优先展开与当前实验状态最相关的内容，你手动选择后会保留你的选择。</p>
+          ${renderTermCards(p)}
           <h4>观察当前实验</h4>
           <ul class="steps">
             <li>材料折射率 n = ${p.n.toFixed(2)}，表面曲率半径 R = ${state.radius.toFixed(1)} cm，中心厚度 d = ${p.d.toFixed(1)} cm，口径 D = ${state.aperture.toFixed(1)} cm。</li>
@@ -1062,6 +1286,7 @@
 
       function setType(type) {
         state.type = type;
+        lastTermKey = "lensType";
         draw();
       }
 
@@ -1086,6 +1311,7 @@
         const group = event.target.closest("[data-drag]");
         if (!group) return;
         dragTarget = group.dataset.drag;
+        lastTermKey = dragTarget === "object" ? "objectDistance" : dragTarget === "screen" ? "screenDistance" : "focalLength";
         if (stage.setPointerCapture) stage.setPointerCapture(event.pointerId);
         event.preventDefault();
       });
@@ -1112,19 +1338,33 @@
 
       $("#convexTool").addEventListener("click", () => setType("convex"));
       $("#concaveTool").addEventListener("click", () => setType("concave"));
-      $("#radius").addEventListener("input", event => { state.radius = Number(event.target.value); draw(); });
-      $("#refractiveIndex").addEventListener("input", event => { state.refractiveIndex = Number(event.target.value); draw(); });
-      $("#thickness").addEventListener("input", event => { state.thickness = Number(event.target.value); draw(); });
-      $("#aperture").addEventListener("input", event => { state.aperture = Number(event.target.value); draw(); });
-      $("#objectHeight").addEventListener("input", event => { state.objectHeight = Number(event.target.value); draw(); });
-      $("#distance").addEventListener("input", event => applyDistance(Number(event.target.value)));
-      $("#screenDistance").addEventListener("input", event => applyScreenDistance(Number(event.target.value)));
-      $$('input[name="rayMode"]').forEach(input => input.addEventListener("change", event => { state.rayMode = event.target.value; draw(); }));
-      $("#showFocus").addEventListener("change", event => { state.showFocus = event.target.checked; draw(); });
-      $("#showVirtual").addEventListener("change", event => { state.showVirtual = event.target.checked; draw(); });
+      $("#radius").addEventListener("input", event => { lastTermKey = "curvatureRadius"; state.radius = Number(event.target.value); draw(); });
+      $("#refractiveIndex").addEventListener("input", event => { lastTermKey = "refractiveIndex"; state.refractiveIndex = Number(event.target.value); draw(); });
+      $("#thickness").addEventListener("input", event => { lastTermKey = "thickness"; state.thickness = Number(event.target.value); draw(); });
+      $("#aperture").addEventListener("input", event => { lastTermKey = "aperture"; state.aperture = Number(event.target.value); draw(); });
+      $("#objectHeight").addEventListener("input", event => { lastTermKey = "objectHeight"; state.objectHeight = Number(event.target.value); draw(); });
+      $("#distance").addEventListener("input", event => { lastTermKey = "objectDistance"; applyDistance(Number(event.target.value)); });
+      $("#screenDistance").addEventListener("input", event => { lastTermKey = "screenDistance"; applyScreenDistance(Number(event.target.value)); });
+      $$('input[name="rayMode"]').forEach(input => input.addEventListener("change", event => {
+        lastTermKey = event.target.value === "edge" ? "edgeRays" : event.target.value === "principal" ? "principalRays" : null;
+        state.rayMode = event.target.value;
+        draw();
+      }));
+      $("#showFocus").addEventListener("change", event => { lastTermKey = "focus"; state.showFocus = event.target.checked; draw(); });
+      $("#showVirtual").addEventListener("change", event => { lastTermKey = "virtualExtension"; state.showVirtual = event.target.checked; draw(); });
       $("#showLabels").addEventListener("change", event => { state.showLabels = event.target.checked; draw(); });
       $$("[data-step]").forEach(button => button.addEventListener("click", () => {
         const delta = Number(button.dataset.delta);
+        const termByStep = {
+          radius: "curvatureRadius",
+          index: "refractiveIndex",
+          thickness: "thickness",
+          aperture: "aperture",
+          height: "objectHeight",
+          distance: "objectDistance",
+          screen: "screenDistance"
+        };
+        lastTermKey = termByStep[button.dataset.step];
         if (button.dataset.step === "radius") state.radius = clamp(state.radius + delta, 12, 40);
         if (button.dataset.step === "index") state.refractiveIndex = clamp(state.refractiveIndex + delta, 1.30, 1.80);
         if (button.dataset.step === "thickness") state.thickness = clamp(state.thickness + delta, 1, 10);
@@ -1141,6 +1381,8 @@
       });
       $("#reset").addEventListener("click", () => {
         Object.assign(state, defaults, { rayMode: "principal", showFocus: true, showVirtual: true, showLabels: false });
+        lastTermKey = null;
+        termOpenOverrides.clear();
         $('input[name="rayMode"][value="principal"]').checked = true;
         $("#showFocus").checked = true;
         $("#showVirtual").checked = true;
@@ -1157,6 +1399,12 @@
       });
       $$(".tab").forEach(tab => tab.addEventListener("click", () => { activeTab = tab.dataset.tab; renderLearn(); }));
       $("#learnContent").addEventListener("click", event => {
+        const summary = event.target.closest(".term-card summary");
+        if (summary) {
+          const card = summary.closest(".term-card");
+          requestAnimationFrame(() => termOpenOverrides.set(card.dataset.termKey, card.open));
+          return;
+        }
         const option = event.target.closest(".quiz-option");
         if (!option) return;
         $$(".quiz-option").forEach(item => item.classList.remove("correct", "wrong"));

@@ -1,5 +1,7 @@
 # Physics and Presentation Checks
 
+For every self-study demonstration, also apply `self-study-patterns.md` before implementation and acceptance testing.
+
 ## Physics model
 
 - Define the system boundary and ignored effects.
@@ -55,7 +57,8 @@
 - Support current iOS Safari, Android Chrome, and their current WeChat embedded browser variants. Use Pointer Events with `touch-action` deliberately and avoid browser-dependent CDN resources.
 - Add `viewport-fit=cover`, safe-area padding, and layouts that tolerate dynamic mobile browser toolbars.
 - Synchronize the panel's values, explanation, derivation, highlighted rule, and quiz answer after every drag, parameter change, mode switch, and reset.
-- When the right-side knowledge panel is open, compact oversized parameter controls and arrange them in about two rows on ordinary desktop widths. Preserve readable labels and usable pointer targets, and degrade to more rows only on narrow screens.
+- Keep parameter controls compact whether the knowledge panel is open or closed, and arrange them in about two rows on ordinary desktop widths. Preserve readable labels and usable pointer targets, and degrade to more rows only on narrow screens.
+- Use relative local resource paths that remain valid when the demonstration is hosted below a GitHub Pages project subpath.
 - Play resumes from the current state; reset returns to the canonical initial state.
 - Parameter changes while paused redraw immediately.
 - Parameter changes while playing restart only when that behavior is explicit.

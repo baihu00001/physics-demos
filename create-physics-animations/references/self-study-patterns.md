@@ -20,12 +20,14 @@ Include four compact learning views when the subject supports them:
 - Represent every demonstrated object with a clearly recognizable apparatus drawing, everyday object, or unambiguous icon. Do not substitute abstract dots, blocks, letters, or generic arrows for the object itself.
 - Keep arrows, vectors, axes, rays, and point markers only when they encode a physical quantity or construction; attach them to the recognizable object they describe.
 - Let learners drag the main objects; keep numeric controls for precision.
+- Make every safe, pedagogically meaningful parameter adjustable. Include relevant initial conditions, apparatus positions, material properties, and geometry instead of exposing only the easiest parameters to implement.
 - Show immediate qualitative feedback such as focused/unfocused, balanced/unbalanced, or real/virtual.
 - Put knowledge content in a closable right-side panel. When open, dock it beside the experiment rather than covering or disabling the experiment.
 - Keep the experiment fully interactive while the knowledge panel is open.
 - On phones, use an upper-experiment/lower-knowledge split instead of squeezing the experiment beside a narrow panel.
 - Keep portrait mode usable and show a dismissible landscape suggestion for diagrams that benefit from extra width.
 - Give touch controls and draggable objects a minimum 44 CSS pixel interaction target.
+- Keep the parameter dock compact whether the knowledge panel is open or closed. On ordinary desktop widths, target about two rows; use denser columns without shrinking phone touch targets below 44 CSS pixels.
 - Provide a deterministic reset and a recovery action such as auto-focus.
 
 ## Explanation and practice
@@ -42,13 +44,14 @@ Include four compact learning views when the subject supports them:
 - Do not define an unfamiliar term mainly with other unexplained technical terms.
 - Ask one concept at a time and give feedback that names the deciding physical principle.
 - Update the explanation, substituted values, derivation, highlighted rule, and quiz answer immediately after any drag, parameter change, mode switch, or reset.
-- When a learner-facing font-size control is provided, drive the experiment, controls, formulas, and knowledge panel from the same scale setting so their typography changes together.
+- Provide a compact learner-facing font-size control with at least small, medium, and large choices. Drive the experiment, controls, formulas, and knowledge panel from the same persisted scale setting so their typography changes together.
 
 ## Acceptance checks
 
 - The learning panel does not hide the only way to manipulate the experiment.
 - Opening the learning panel does not add a blocking backdrop and does not disable dragging or controls.
 - The numbers and qualitative state shown in the learning panel match the experiment at all times.
+- Every displayed adjustable property has a working control, valid bounds, units where applicable, and an immediate synchronized redraw.
 - A learner can identify every main object from its drawing without relying on a single-letter symbol.
 - A learner can recover the default state without reloading.
 - Visual feedback does not claim that an unobservable result has been measured.

@@ -36,7 +36,8 @@ Include four compact learning views when the subject supports them:
 - Explain sign conventions before interpreting negative values.
 - Explain every technical term at first use in language understandable to a middle-school self-learner.
 - Present every technical term in this fixed order: an accurate standard definition, a plain-language explanation with a concrete example, then a paired comparison with the concept it is most often confused with.
-- Use compact native disclosure cards for larger glossaries. Automatically open two or three terms relevant to the current state, but preserve the learner's manual open/closed choices during subsequent synchronized updates.
+- Include terms that carry a precise disciplinary meaning, symbol convention, model assumption, or meaningful confusion risk. Do not turn self-evident everyday descriptions such as taller, shorter, upright, or inverted into separate glossary cards unless the lesson specifically needs that distinction.
+- Use compact native disclosure cards for larger glossaries. Keep all terms collapsed initially and preserve the learner's manual open/closed choices during subsequent synchronized updates.
 - Pair each technical term with a familiar real phenomenon, everyday device, or concrete observation. Prefer examples such as a straw appearing bent in water, a projected image on a wall, bicycle braking, or ripples on water over purely symbolic explanations.
 - Do not define an unfamiliar term mainly with other unexplained technical terms.
 - Ask one concept at a time and give feedback that names the deciding physical principle.

@@ -203,24 +203,40 @@
       position: relative;
       z-index: 2;
       display: grid;
-      grid-template-columns: repeat(4, minmax(210px, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 0;
-      width: min(1280px, calc(100% - 28px));
-      margin: -7px auto 16px;
+      width: min(1380px, calc(100% - 20px));
+      margin: -7px auto 12px;
       border: 2px solid #323a45;
-      border-radius: 18px;
+      border-radius: 14px;
       overflow: hidden;
       background: var(--panel);
       box-shadow: 0 8px 25px #0002;
     }
-    .control-section { padding: 16px 18px; border-right: 1px solid #9ba8b1; }
+    .control-section { min-width: 0; padding: 10px 11px; border-right: 1px solid #9ba8b1; }
     .control-section:last-child { border-right: 0; }
-    .control-section h2 { margin: 0 0 10px; font-size: 17px; }
-    .radio, .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; cursor: pointer; }
-    .radio input, .check input { width: 18px; height: 18px; accent-color: var(--blue); }
-    .stepper { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: 7px; }
+    .control-section:last-child {
+      grid-column: span 2;
+      display: grid;
+      grid-template-columns: minmax(120px, .8fr) 1fr 1fr;
+      align-content: start;
+      column-gap: 10px;
+    }
+    .control-section:last-child h2 { grid-column: 1 / -1; }
+    .control-section:last-child .check { grid-column: 1; }
+    .control-section:last-child .result-list {
+      grid-column: 2 / -1;
+      grid-row: 2 / 5;
+      grid-template-columns: auto 1fr auto 1fr;
+      align-content: start;
+    }
+    .control-section h2 { margin: 0 0 6px; font-size: 14px; }
+    .radio, .check { display: flex; align-items: center; gap: 6px; margin: 4px 0; cursor: pointer; font-size: 13px; }
+    .radio input, .check input { width: 16px; height: 16px; accent-color: var(--blue); }
+    .stepper { display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px; align-items: center; gap: 4px; }
     .stepper button {
-      height: 34px;
+      height: 30px;
+      padding: 0;
       border: 1px solid #6b727c;
       border-radius: 6px;
       background: #fff;
@@ -228,22 +244,23 @@
       font-weight: 900;
     }
     .value-box {
-      min-height: 34px;
+      min-height: 30px;
       display: grid;
       place-items: center;
       border: 1px solid #c8ced7;
       border-radius: 5px;
       background: #fff;
+      font-size: 13px;
       font-variant-numeric: tabular-nums;
     }
-    input[type="range"] { width: 100%; margin-top: 13px; accent-color: var(--blue); }
-    .result-list { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; margin-top: 10px; font-size: 14px; }
+    input[type="range"] { width: 100%; height: 20px; margin-top: 4px; accent-color: var(--blue); }
+    .result-list { display: grid; grid-template-columns: auto 1fr; gap: 3px 7px; margin-top: 5px; font-size: 11px; }
     .result-list dt { color: var(--muted); }
     .result-list dd { margin: 0; text-align: right; font-weight: 700; }
     .focus-button {
       width: 100%;
-      margin-top: 10px;
-      padding: 9px;
+      margin-top: 5px;
+      padding: 6px;
       border: 0;
       border-radius: 8px;
       background: var(--orange);
@@ -376,9 +393,23 @@
     }
     .quiz-option.correct { border-color: #1d9b63; background: #edfbf4; }
     .quiz-option.wrong { border-color: #db4d4d; background: #fff0f0; }
+    @media (min-width: 1101px) {
+      .control-section:first-child {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-content: start;
+        column-gap: 8px;
+      }
+      .control-section:first-child h2 { grid-column: 1 / -1; }
+    }
     @media (max-width: 1100px) {
-      .control-dock { grid-template-columns: repeat(2, 1fr); }
+      .control-dock { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .control-section { border-bottom: 1px solid #9ba8b1; }
+      .control-section:last-child {
+        grid-column: auto;
+        display: block;
+      }
+      .control-section:last-child .result-list { display: grid; grid-template-columns: auto 1fr; }
     }
     @media (max-width: 900px) {
       body.learn-open .app { margin-right: 0; }
@@ -672,7 +703,6 @@
       const state = { ...defaults, rayMode: "principal", showFocus: true, showVirtual: true, showLabels: false };
       let activeTab = "explain";
       let dragTarget = null;
-      let lastTermKey = null;
       const termOpenOverrides = new Map();
 
       const sx = worldX => 700 + worldX * scale;
@@ -995,8 +1025,6 @@
       function termData(p) {
         const finiteV = p.atFocus ? "当前没有有限像距" : `当前 v = ${p.v.toFixed(1)} cm`;
         const imageKind = p.v > 0 ? "实像" : "虚像";
-        const orientation = p.m < 0 ? "倒立" : "正立";
-        const sizeKind = Math.abs(p.m) > 1.04 ? "放大" : Math.abs(p.m) < .96 ? "缩小" : "等大";
         return [
           {
             key: "lensType", name: "透镜类型", symbol: state.type === "convex" ? "凸透镜" : "凹透镜", current: `当前：${state.type === "convex" ? "凸透镜" : "凹透镜"}`,
@@ -1053,12 +1081,6 @@
             confuse: "口径主要影响通光量和可通过的光线范围；曲率半径描述表面弯曲，中心厚度描述前后厚度。"
           },
           {
-            key: "objectHeight", name: "物体高度", symbol: "h", current: `当前 h = ${state.objectHeight.toFixed(1)} cm`,
-            standard: "物体高度是物体垂直于主光轴方向的线性尺寸，本演示取主轴到铅笔顶端的距离。",
-            plain: "就是演示中铅笔从主轴到笔尖有多高。",
-            confuse: "物体高度会影响像的实际高度，但在近轴模型中不会单独改变像距。"
-          },
-          {
             key: "objectDistance", name: "物距", symbol: "u", current: `当前 u = ${p.u.toFixed(1)} cm`,
             standard: "物体上选定的物点到透镜参考位置沿主光轴方向的距离称为物距。",
             plain: "在这里就是铅笔到透镜中央的水平距离。",
@@ -1093,30 +1115,6 @@
             standard: "实际光线没有会聚，而由发散光线的反向延长线相交形成的视觉位置称为虚像，不能用光屏承接。",
             plain: "照镜子看到镜后的自己是虚像，看得到，但把纸放到镜后接不到那个像。",
             confuse: "虚像不是虚假的错觉，它具有确定位置并能被眼睛或相机观察；只是该位置没有实际光线会聚。"
-          },
-          {
-            key: "upright", name: "正立", symbol: orientation === "正立" ? "当前" : "",
-            standard: "像相对于物体在上下方向保持相同朝向，称为正立。",
-            plain: "物体笔尖朝上，像的笔尖也朝上。",
-            confuse: "正立描述方向，不表示像一定放大。凹透镜形成的虚像通常正立但缩小。"
-          },
-          {
-            key: "inverted", name: "倒立", symbol: orientation === "倒立" ? "当前" : "",
-            standard: "像相对于物体在上下方向发生反转，称为倒立。",
-            plain: "物体笔尖朝上，像的笔尖朝下。",
-            confuse: "倒立描述方向，不表示像一定缩小。投影仪形成的实像倒立但可以放大。"
-          },
-          {
-            key: "enlarged", name: "放大", symbol: sizeKind === "放大" ? "当前" : "",
-            standard: "像的线性尺寸大于物体对应线性尺寸，即横向放大率绝对值 |m| > 1，称为放大。",
-            plain: "像中的铅笔比原来的铅笔画得更高。",
-            confuse: "放大描述像与物的大小比例，不等同于放大率的正负；正负表示正立或倒立。"
-          },
-          {
-            key: "reduced", name: "缩小", symbol: sizeKind === "缩小" ? "当前" : "",
-            standard: "像的线性尺寸小于物体对应线性尺寸，即横向放大率绝对值 |m| < 1，称为缩小。",
-            plain: "相机把高楼记录成感光元件上的小图像，就是缩小成像。",
-            confuse: "缩小不表示像一定是虚像。照相机得到的通常是倒立、缩小的实像。"
           },
           {
             key: "principalRays", name: "主要光线", symbol: "三条",
@@ -1157,19 +1155,9 @@
         ];
       }
 
-      function automaticTermKeys(p) {
-        const keys = [];
-        if (lastTermKey) keys.push(lastTermKey);
-        keys.push(state.type === "convex" ? "lensType" : "virtualImage");
-        if (p.atFocus) keys.push("focus", "focalLength");
-        else keys.push(p.v > 0 ? "realImage" : "virtualImage", Math.abs(p.m) > 1.04 ? "enlarged" : "reduced");
-        return [...new Set(keys)].slice(0, 3);
-      }
-
       function renderTermCards(p) {
-        const autoOpen = new Set(automaticTermKeys(p));
         return `<div class="term-list">${termData(p).map(term => {
-          const open = termOpenOverrides.has(term.key) ? termOpenOverrides.get(term.key) : autoOpen.has(term.key);
+          const open = termOpenOverrides.get(term.key) === true;
           return `<details class="term-card" data-term-key="${term.key}" ${open ? "open" : ""}>
             <summary><span>${term.name}</span>${term.symbol ? `<span class="term-symbol">${term.symbol}</span>` : ""}${term.current ? `<span class="term-current">${term.current}</span>` : ""}</summary>
             <div class="term-body">
@@ -1187,7 +1175,7 @@
           <h3>${info.title}</h3>
           <div class="explain-card">${info.body}</div>
           <h4>专业名词：先准确，再理解，再辨析</h4>
-          <p>点击名词可展开或收起。系统会优先展开与当前实验状态最相关的内容，你手动选择后会保留你的选择。</p>
+          <p>所有名词默认收起。点击需要了解的名词即可展开，系统会保留你的选择。</p>
           ${renderTermCards(p)}
           <h4>观察当前实验</h4>
           <ul class="steps">
@@ -1286,7 +1274,6 @@
 
       function setType(type) {
         state.type = type;
-        lastTermKey = "lensType";
         draw();
       }
 
@@ -1311,7 +1298,6 @@
         const group = event.target.closest("[data-drag]");
         if (!group) return;
         dragTarget = group.dataset.drag;
-        lastTermKey = dragTarget === "object" ? "objectDistance" : dragTarget === "screen" ? "screenDistance" : "focalLength";
         if (stage.setPointerCapture) stage.setPointerCapture(event.pointerId);
         event.preventDefault();
       });
@@ -1338,33 +1324,22 @@
 
       $("#convexTool").addEventListener("click", () => setType("convex"));
       $("#concaveTool").addEventListener("click", () => setType("concave"));
-      $("#radius").addEventListener("input", event => { lastTermKey = "curvatureRadius"; state.radius = Number(event.target.value); draw(); });
-      $("#refractiveIndex").addEventListener("input", event => { lastTermKey = "refractiveIndex"; state.refractiveIndex = Number(event.target.value); draw(); });
-      $("#thickness").addEventListener("input", event => { lastTermKey = "thickness"; state.thickness = Number(event.target.value); draw(); });
-      $("#aperture").addEventListener("input", event => { lastTermKey = "aperture"; state.aperture = Number(event.target.value); draw(); });
-      $("#objectHeight").addEventListener("input", event => { lastTermKey = "objectHeight"; state.objectHeight = Number(event.target.value); draw(); });
-      $("#distance").addEventListener("input", event => { lastTermKey = "objectDistance"; applyDistance(Number(event.target.value)); });
-      $("#screenDistance").addEventListener("input", event => { lastTermKey = "screenDistance"; applyScreenDistance(Number(event.target.value)); });
+      $("#radius").addEventListener("input", event => { state.radius = Number(event.target.value); draw(); });
+      $("#refractiveIndex").addEventListener("input", event => { state.refractiveIndex = Number(event.target.value); draw(); });
+      $("#thickness").addEventListener("input", event => { state.thickness = Number(event.target.value); draw(); });
+      $("#aperture").addEventListener("input", event => { state.aperture = Number(event.target.value); draw(); });
+      $("#objectHeight").addEventListener("input", event => { state.objectHeight = Number(event.target.value); draw(); });
+      $("#distance").addEventListener("input", event => applyDistance(Number(event.target.value)));
+      $("#screenDistance").addEventListener("input", event => applyScreenDistance(Number(event.target.value)));
       $$('input[name="rayMode"]').forEach(input => input.addEventListener("change", event => {
-        lastTermKey = event.target.value === "edge" ? "edgeRays" : event.target.value === "principal" ? "principalRays" : null;
         state.rayMode = event.target.value;
         draw();
       }));
-      $("#showFocus").addEventListener("change", event => { lastTermKey = "focus"; state.showFocus = event.target.checked; draw(); });
-      $("#showVirtual").addEventListener("change", event => { lastTermKey = "virtualExtension"; state.showVirtual = event.target.checked; draw(); });
+      $("#showFocus").addEventListener("change", event => { state.showFocus = event.target.checked; draw(); });
+      $("#showVirtual").addEventListener("change", event => { state.showVirtual = event.target.checked; draw(); });
       $("#showLabels").addEventListener("change", event => { state.showLabels = event.target.checked; draw(); });
       $$("[data-step]").forEach(button => button.addEventListener("click", () => {
         const delta = Number(button.dataset.delta);
-        const termByStep = {
-          radius: "curvatureRadius",
-          index: "refractiveIndex",
-          thickness: "thickness",
-          aperture: "aperture",
-          height: "objectHeight",
-          distance: "objectDistance",
-          screen: "screenDistance"
-        };
-        lastTermKey = termByStep[button.dataset.step];
         if (button.dataset.step === "radius") state.radius = clamp(state.radius + delta, 12, 40);
         if (button.dataset.step === "index") state.refractiveIndex = clamp(state.refractiveIndex + delta, 1.30, 1.80);
         if (button.dataset.step === "thickness") state.thickness = clamp(state.thickness + delta, 1, 10);
@@ -1381,7 +1356,6 @@
       });
       $("#reset").addEventListener("click", () => {
         Object.assign(state, defaults, { rayMode: "principal", showFocus: true, showVirtual: true, showLabels: false });
-        lastTermKey = null;
         termOpenOverrides.clear();
         $('input[name="rayMode"][value="principal"]').checked = true;
         $("#showFocus").checked = true;

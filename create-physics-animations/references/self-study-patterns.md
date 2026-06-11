@@ -42,6 +42,7 @@ Include four compact learning views when the subject supports them:
 - Do not define an unfamiliar term mainly with other unexplained technical terms.
 - Ask one concept at a time and give feedback that names the deciding physical principle.
 - Update the explanation, substituted values, derivation, highlighted rule, and quiz answer immediately after any drag, parameter change, mode switch, or reset.
+- When a learner-facing font-size control is provided, drive the experiment, controls, formulas, and knowledge panel from the same scale setting so their typography changes together.
 
 ## Acceptance checks
 

@@ -19,6 +19,7 @@
       --focus: #ffdf00;
       --ray: #191919;
       --orange: #ff7a1a;
+      --font-scale: 1;
     }
     * { box-sizing: border-box; }
     body {
@@ -33,6 +34,19 @@
     }
     button, input { font: inherit; }
     button { color: inherit; }
+    .app, .learn-panel { font-size: calc(14px * var(--font-scale)); }
+    .brand-name { font-size: calc(18px * var(--font-scale)); }
+    .brand h1 { font-size: calc(18px * var(--font-scale)); }
+    .brand p { font-size: calc(12px * var(--font-scale)); }
+    .drag-hint, .chip { font-size: calc(13px * var(--font-scale)); }
+    .control-section h2 { font-size: calc(14px * var(--font-scale)); }
+    .radio, .check, .value-box { font-size: calc(13px * var(--font-scale)); }
+    .result-list { font-size: calc(11px * var(--font-scale)); }
+    .bottom-nav strong { font-size: calc(21px * var(--font-scale)); }
+    .learn-head h2 { font-size: calc(22px * var(--font-scale)); }
+    .learn-content { font-size: calc(14px * var(--font-scale)); }
+    .formula-card { font-size: calc(20px * var(--font-scale)); }
+    .case { font-size: calc(13px * var(--font-scale)); }
     .orientation-tip {
       display: none;
       position: sticky;
@@ -85,7 +99,7 @@
     body.learn-open .control-section h2 {
       margin-bottom: 6px;
       overflow: hidden;
-      font-size: 13px;
+      font-size: calc(13px * var(--font-scale));
       text-overflow: ellipsis;
       white-space: nowrap;
     }
@@ -96,19 +110,19 @@
     body.learn-open .stepper button {
       height: 27px;
       padding: 0;
-      font-size: 12px;
+      font-size: calc(12px * var(--font-scale));
     }
-    body.learn-open .value-box { min-height: 27px; font-size: 12px; }
+    body.learn-open .value-box { min-height: 27px; font-size: calc(12px * var(--font-scale)); }
     body.learn-open input[type="range"] { height: 15px; margin-top: 5px; }
     body.learn-open .radio,
-    body.learn-open .check { gap: 4px; margin: 3px 0; font-size: 11px; }
+    body.learn-open .check { gap: 4px; margin: 3px 0; font-size: calc(11px * var(--font-scale)); }
     body.learn-open .radio input,
     body.learn-open .check input { width: 13px; height: 13px; }
-    body.learn-open .focus-button { margin-top: 5px; padding: 5px 3px; font-size: 11px; }
+    body.learn-open .focus-button { margin-top: 5px; padding: 5px 3px; font-size: calc(11px * var(--font-scale)); }
     body.learn-open .result-list {
       gap: 2px 5px;
       margin-top: 4px;
-      font-size: 10px;
+      font-size: calc(10px * var(--font-scale));
     }
     .topbar {
       display: grid;
@@ -163,6 +177,25 @@
       font-weight: 700;
     }
     .action.primary { border-color: var(--blue); color: #fff; background: var(--blue); }
+    .font-controls {
+      display: inline-grid;
+      grid-template-columns: repeat(3, 34px);
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid #aeb4be;
+      border-radius: 8px;
+      background: #f5f7fa;
+    }
+    .font-button {
+      min-height: 34px;
+      padding: 0;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .font-button.active { color: #fff; background: var(--blue); }
 
     .workspace { position: relative; min-height: 560px; background: #fff; }
     #stage { display: block; width: 100%; height: 100%; min-height: 560px; touch-action: none; user-select: none; }
@@ -443,6 +476,8 @@
       .tool-group { gap: 6px; }
       .tool-button { min-width: 92px; min-height: 48px; }
       .action { min-height: 44px; }
+      .font-controls { grid-template-columns: repeat(3, 40px); }
+      .font-button { min-height: 40px; }
       .workspace, #stage { min-height: 430px; }
       .control-dock {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -508,6 +543,18 @@
       }
       .learn-panel.open { display: grid; transform: none; }
     }
+    .brand-name { font-size: calc(18px * var(--font-scale)); }
+    .brand h1 { font-size: calc(18px * var(--font-scale)); }
+    .brand p { font-size: calc(12px * var(--font-scale)); }
+    .drag-hint, .chip { font-size: calc(13px * var(--font-scale)); }
+    .control-section h2 { font-size: calc(14px * var(--font-scale)); }
+    .radio, .check, .value-box { font-size: calc(13px * var(--font-scale)); }
+    .result-list { font-size: calc(11px * var(--font-scale)); }
+    .bottom-nav strong { font-size: calc(21px * var(--font-scale)); }
+    .learn-head h2 { font-size: calc(22px * var(--font-scale)); }
+    .learn-content { font-size: calc(14px * var(--font-scale)); }
+    .formula-card { font-size: calc(20px * var(--font-scale)); }
+    .case { font-size: calc(13px * var(--font-scale)); }
   </style>
 </head>
 <body>
@@ -538,6 +585,11 @@
         </button>
       </div>
       <div class="tool-group top-actions">
+        <div class="font-controls" role="group" aria-label="统一调整演示区和知识区字号">
+          <button class="font-button" type="button" data-font-scale="0.9" aria-label="小字号">小</button>
+          <button class="font-button active" type="button" data-font-scale="1" aria-label="标准字号">中</button>
+          <button class="font-button" type="button" data-font-scale="1.15" aria-label="大字号">大</button>
+        </div>
         <button id="reset" class="action" type="button">↻ 重置实验</button>
         <button id="openLearn" class="action primary" type="button">📖 知识讲解</button>
       </div>
@@ -704,6 +756,9 @@
       let activeTab = "explain";
       let dragTarget = null;
       const termOpenOverrides = new Map();
+      let savedFontScale = null;
+      try { savedFontScale = localStorage.getItem("physics-font-scale"); } catch {}
+      let fontScale = ["0.9", "1", "1.15"].includes(savedFontScale) ? savedFontScale : "1";
 
       const sx = worldX => 700 + worldX * scale;
       const sy = worldY => axisY - worldY * scale;
@@ -729,6 +784,17 @@
         const screenDistance = state.screenX - state.lensX;
         const focused = v > 0 && Math.abs(screenDistance - v) <= 1.1;
         return { f, fMag, R1, R2, n, d, u, v, m, imageX, imageHeight, screenDistance, focused, atFocus };
+      }
+
+      function applyFontScale(value) {
+        fontScale = value;
+        document.documentElement.style.setProperty("--font-scale", value);
+        $$(".font-button").forEach(button => {
+          const active = button.dataset.fontScale === value;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
+        try { localStorage.setItem("physics-font-scale", value); } catch {}
       }
 
       function classify(p) {
@@ -1371,6 +1437,9 @@
       $("#dismissOrientationTip").addEventListener("click", () => {
         $("#orientationTip").classList.add("dismissed");
       });
+      $$(".font-button").forEach(button => button.addEventListener("click", () => {
+        applyFontScale(button.dataset.fontScale);
+      }));
       $$(".tab").forEach(tab => tab.addEventListener("click", () => { activeTab = tab.dataset.tab; renderLearn(); }));
       $("#learnContent").addEventListener("click", event => {
         const summary = event.target.closest(".term-card summary");
@@ -1390,6 +1459,7 @@
       });
       window.addEventListener("keydown", event => { if (event.key === "Escape") closeLearn(); });
 
+      applyFontScale(fontScale);
       requestAnimationFrame(draw);
     })();
   </script>

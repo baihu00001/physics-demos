@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>糖糖和糖豆｜透镜虚拟实验室</title>
   <style>
     :root {
@@ -25,12 +25,41 @@
       margin: 0;
       min-height: 100vh;
       overflow-x: hidden;
+      padding-right: env(safe-area-inset-right);
+      padding-left: env(safe-area-inset-left);
       background: #f7f7f8;
       color: var(--ink);
       font-family: "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
     }
     button, input { font: inherit; }
     button { color: inherit; }
+    .orientation-tip {
+      display: none;
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 7px 52px 7px 12px;
+      border-bottom: 1px solid #f2b36f;
+      background: #fff4df;
+      color: #814700;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .orientation-tip button {
+      position: absolute;
+      right: max(10px, env(safe-area-inset-right));
+      width: 34px;
+      height: 34px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .orientation-tip.dismissed { display: none !important; }
     .app {
       min-height: 100vh;
       display: grid;
@@ -311,8 +340,22 @@
       .control-section { border-bottom: 1px solid #9ba8b1; }
     }
     @media (max-width: 900px) {
-      body.learn-open .app { margin-right: 46vw; }
-      .learn-panel { width: 46vw; }
+      body.learn-open .app { margin-right: 0; }
+      body.learn-open .app { padding-bottom: 52vh; padding-bottom: 52dvh; }
+      .learn-panel {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        height: 52vh;
+        height: 52dvh;
+        display: none;
+        border-top: 2px solid var(--blue);
+        border-left: 0;
+        box-shadow: 0 -8px 24px #0002;
+        transform: none;
+      }
+      .learn-panel.open { display: grid; transform: none; }
       body.learn-open .control-dock { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .topbar { grid-template-columns: 1fr; }
       .tool-group, .top-actions { justify-content: center; }
@@ -320,19 +363,86 @@
       .brand-lockup { justify-content: center; }
     }
     @media (max-width: 760px) {
-      body.learn-open .app { margin-right: 48vw; }
-      .learn-panel { width: 48vw; }
-      .workspace, #stage { min-height: 470px; }
-      .control-dock { grid-template-columns: 1fr; }
+      .topbar { gap: 10px; padding: 9px 12px; }
+      .brand-logo { width: 52px; height: 52px; }
+      .brand-name { font-size: 16px; }
+      .brand h1 { font-size: 16px; }
+      .brand p { font-size: 11px; }
+      .tool-group { gap: 6px; }
+      .tool-button { min-width: 92px; min-height: 48px; }
+      .action { min-height: 44px; }
+      .workspace, #stage { min-height: 430px; }
+      .control-dock {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: calc(100% - 12px);
+        margin-bottom: calc(10px + env(safe-area-inset-bottom));
+        border-radius: 12px;
+      }
       body.learn-open .control-dock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .control-section { border-right: 0; }
+      .control-section { min-width: 0; padding: 12px 10px; }
+      .control-section h2 { font-size: 14px; }
+      .stepper { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 4px; }
+      .stepper button { min-height: 44px; }
+      .value-box { min-height: 44px; font-size: 13px; }
+      input[type="range"] { height: 44px; margin-top: 2px; }
+      .radio, .check { min-height: 44px; margin: 2px 0; }
+      .radio input, .check input { width: 22px; height: 22px; }
+      .focus-button { min-height: 44px; }
       .stage-readout { top: 52px; max-width: calc(100vw - 36px); }
       .tabs { grid-template-columns: 1fr 1fr; }
+      .tab, .learn-head button, .quiz-option { min-height: 44px; }
       .learn-content { padding: 14px; font-size: 14px; }
+      .bottom-nav { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+    }
+    @media (max-width: 760px) and (orientation: portrait) {
+      .orientation-tip { display: flex; }
+    }
+    @media (max-height: 500px) and (orientation: landscape) {
+      body.learn-open .app {
+        margin-right: 0;
+        padding-bottom: 52vh;
+        padding-bottom: 52dvh;
+      }
+      .topbar {
+        grid-template-columns: 1fr auto auto;
+        min-height: 58px;
+        padding: 6px 12px;
+      }
+      .brand-lockup { justify-content: flex-start; gap: 8px; }
+      .brand-logo { width: 42px; height: 42px; border-radius: 10px; }
+      .brand p { display: none; }
+      .tool-button { min-width: 76px; min-height: 44px; padding: 3px 8px; }
+      .lens-icon { width: 18px; height: 26px; }
+      .action { min-height: 44px; padding: 0 10px; font-size: 12px; }
+      .workspace, #stage { min-height: 350px; }
+      .control-dock,
+      body.learn-open .control-dock { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .stepper { grid-template-columns: 44px minmax(0, 1fr) 44px; }
+      .stepper button, .value-box, input[type="range"],
+      .radio, .check, .focus-button, .tab, .learn-head button, .quiz-option { min-height: 44px; }
+      .radio input, .check input { width: 20px; height: 20px; }
+      .learn-panel {
+        position: fixed;
+        top: auto;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 52vh;
+        height: 52dvh;
+        display: none;
+        border-top: 2px solid var(--blue);
+        border-left: 0;
+        transform: none;
+      }
+      .learn-panel.open { display: grid; transform: none; }
     }
   </style>
 </head>
 <body>
+  <div id="orientationTip" class="orientation-tip" role="status">
+    <span>↻ 横屏观看光路更清楚，竖屏也可以继续操作</span>
+    <button id="dismissOrientationTip" type="button" aria-label="关闭横屏提示">×</button>
+  </div>
   <div class="app">
     <header class="topbar">
       <div class="brand">
@@ -976,7 +1086,8 @@
         const group = event.target.closest("[data-drag]");
         if (!group) return;
         dragTarget = group.dataset.drag;
-        stage.setPointerCapture(event.pointerId);
+        if (stage.setPointerCapture) stage.setPointerCapture(event.pointerId);
+        event.preventDefault();
       });
       stage.addEventListener("pointermove", event => {
         if (!dragTarget) return;
@@ -1041,6 +1152,9 @@
       $("#bottomDerive").addEventListener("click", () => openLearn("derive"));
       $("#bottomQuiz").addEventListener("click", () => openLearn("quiz"));
       $("#closeLearn").addEventListener("click", closeLearn);
+      $("#dismissOrientationTip").addEventListener("click", () => {
+        $("#orientationTip").classList.add("dismissed");
+      });
       $$(".tab").forEach(tab => tab.addEventListener("click", () => { activeTab = tab.dataset.tab; renderLearn(); }));
       $("#learnContent").addEventListener("click", event => {
         const option = event.target.closest(".quiz-option");

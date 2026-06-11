@@ -23,6 +23,9 @@ Include four compact learning views when the subject supports them:
 - Show immediate qualitative feedback such as focused/unfocused, balanced/unbalanced, or real/virtual.
 - Put knowledge content in a closable right-side panel. When open, dock it beside the experiment rather than covering or disabling the experiment.
 - Keep the experiment fully interactive while the knowledge panel is open.
+- On phones, use an upper-experiment/lower-knowledge split instead of squeezing the experiment beside a narrow panel.
+- Keep portrait mode usable and show a dismissible landscape suggestion for diagrams that benefit from extra width.
+- Give touch controls and draggable objects a minimum 44 CSS pixel interaction target.
 - Provide a deterministic reset and a recovery action such as auto-focus.
 
 ## Explanation and practice

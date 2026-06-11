@@ -48,6 +48,11 @@
 
 - For self-study demonstrations, place knowledge content in a closable right-side panel docked beside the experiment.
 - Keep the experiment visible and fully interactive while the knowledge panel is open; do not add a blocking backdrop.
+- On phone-sized viewports, replace the right-side panel with a fixed lower split panel so the experiment remains visible and interactive above it.
+- Prefer landscape for wide physics diagrams, but show only a dismissible suggestion in portrait mode; never block the lesson based on orientation.
+- Use touch targets at least 44 CSS pixels high or wide for buttons, slider tracks, tabs, checkboxes, and drag handles on phones.
+- Support current iOS Safari, Android Chrome, and their current WeChat embedded browser variants. Use Pointer Events with `touch-action` deliberately and avoid browser-dependent CDN resources.
+- Add `viewport-fit=cover`, safe-area padding, and layouts that tolerate dynamic mobile browser toolbars.
 - Synchronize the panel's values, explanation, derivation, highlighted rule, and quiz answer after every drag, parameter change, mode switch, and reset.
 - When the right-side knowledge panel is open, compact oversized parameter controls and arrange them in about two rows on ordinary desktop widths. Preserve readable labels and usable pointer targets, and degrade to more rows only on narrow screens.
 - Play resumes from the current state; reset returns to the canonical initial state.

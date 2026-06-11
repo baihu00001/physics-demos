@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fff8f2">
+  <title>糖糖和糖豆｜物理动态演示</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #667085;
+      --orange: #f36d2f;
+      --blue: #258fca;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      background: linear-gradient(145deg, #fff8f2 0%, #f3fbff 55%, #fff 100%);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    }
+    main { width: min(1080px, calc(100% - 28px)); margin: 0 auto; padding: 28px 0 54px; }
+    .brand { display: flex; align-items: center; gap: 18px; }
+    .brand img {
+      width: 92px;
+      height: 92px;
+      object-fit: cover;
+      border: 3px solid #ff9b68;
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: 0 8px 24px #f36d2f22;
+    }
+    .brand-name { color: var(--orange); font-size: 24px; font-weight: 900; letter-spacing: .08em; }
+    h1 { margin: 3px 0 6px; font-size: clamp(28px, 5vw, 46px); }
+    .lead { margin: 0; color: var(--muted); line-height: 1.7; }
+    .section-title { margin: 42px 0 16px; font-size: 22px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .card {
+      display: grid;
+      grid-template-columns: 130px minmax(0, 1fr);
+      min-height: 210px;
+      overflow: hidden;
+      border: 1px solid #d8e2e9;
+      border-radius: 20px;
+      background: #fff;
+      color: inherit;
+      text-decoration: none;
+      box-shadow: 0 12px 32px #1e4b6812;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .card:active { transform: scale(.985); }
+    .visual {
+      display: grid;
+      place-items: center;
+      background: linear-gradient(160deg, #e5f7ff, #f6efff);
+    }
+    .lens {
+      width: 58px;
+      height: 130px;
+      border: 3px solid #29295e;
+      border-radius: 50%;
+      background: linear-gradient(90deg, #c9ecff88, #716fdd, #e6f7ff99);
+    }
+    .card-body { padding: 24px 22px; }
+    .tag {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff2e9;
+      color: #b64a19;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .card h2 { margin: 13px 0 8px; font-size: 23px; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .enter { display: inline-block; margin-top: 18px; color: var(--blue); font-weight: 900; }
+    .coming { opacity: .62; pointer-events: none; }
+    footer { margin-top: 34px; color: var(--muted); font-size: 13px; text-align: center; }
+    @media (hover: hover) { .card:not(.coming):hover { transform: translateY(-4px); box-shadow: 0 18px 40px #1e4b6820; } }
+    @media (max-width: 700px) {
+      main { padding-top: 18px; }
+      .brand img { width: 72px; height: 72px; border-radius: 18px; }
+      .brand-name { font-size: 19px; }
+      .grid { grid-template-columns: 1fr; }
+      .card { grid-template-columns: 105px minmax(0, 1fr); min-height: 185px; }
+      .card-body { padding: 19px 16px; }
+      .lens { width: 48px; height: 108px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="brand">
+      <img src="lens-interactive-demo/assets/tangtang-tangdou-logo-clean.png" alt="糖糖和糖豆：背书包举手的学生和一只猫">
+      <div>
+        <div class="brand-name">糖糖和糖豆</div>
+        <h1>物理动态演示</h1>
+        <p class="lead">看得见、能操作、会推演的初中物理自学实验。</p>
+      </div>
+    </header>
+
+    <h2 class="section-title">选择一个实验</h2>
+    <section class="grid" aria-label="物理实验目录">
+      <a class="card" href="lens-interactive-demo/">
+        <div class="visual" aria-hidden="true"><span class="lens"></span></div>
+        <div class="card-body">
+          <span class="tag">八年级物理 · 光学</span>
+          <h2>透镜虚拟实验室</h2>
+          <p>拖动物体、凸透镜、凹透镜和光屏，调节全部参数，观察实像与虚像的形成。</p>
+          <span class="enter">进入动态实验 →</span>
+        </div>
+      </a>
+      <article class="card coming" aria-label="更多实验正在准备">
+        <div class="visual" aria-hidden="true"><span style="font-size:58px">＋</span></div>
+        <div class="card-body">
+          <span class="tag">持续更新</span>
+          <h2>更多物理实验</h2>
+          <p>运动学、受力分析、抛体运动、碰撞与机械能演示将陆续加入。</p>
+        </div>
+      </article>
+    </section>
+    <footer>无需安装应用，手机浏览器或微信内直接打开即可使用。</footer>
+  </main>
+</body>
+</html>
